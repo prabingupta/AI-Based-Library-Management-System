@@ -1,0 +1,140 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <h2 style="font-size:22px; font-weight:700; color:#111827; margin-bottom:4px;">Good day, {{ request.user.first_name }} 👋</h2>
+    <p style="color:#6b7280; font-size:14px; margin:0;">Here's what's happening in your library today.</p>
+</div>
+
+<!-- Stat Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+        <div class="stat-card">
+            <div class="stat-icon" style="background:#eef2ff; color:#4f46e5;">
+                <i class="fa-solid fa-books"></i>
+            </div>
+            <div class="stat-value">{{ total_books }}</div>
+            <div class="stat-label">Total Books</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card">
+            <div class="stat-icon" style="background:#ecfdf5; color:#10b981;">
+                <i class="fa-solid fa-users"></i>
+            </div>
+            <div class="stat-value">{{ total_members }}</div>
+            <div class="stat-label">Total Members</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card">
+            <div class="stat-icon" style="background:#fffbeb; color:#f59e0b;">
+                <i class="fa-solid fa-arrow-right-arrow-left"></i>
+            </div>
+            <div class="stat-value">{{ active_borrows }}</div>
+            <div class="stat-label">Active Borrows</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card">
+            <div class="stat-icon" style="background:#fef2f2; color:#ef4444;">
+                <i class="fa-solid fa-clock-rotate-left"></i>
+            </div>
+            <div class="stat-value">{{ overdue_count }}</div>
+            <div class="stat-label">Overdue</div>
+        </div>
+    </div>
+</div>
+
+<!-- Second Row -->
+<div class="row g-3 mb-4">
+    <div class="col-6 col-md-3">
+        <div class="stat-card">
+            <div class="stat-icon" style="background:#f0fdf4; color:#16a34a;">
+                <i class="fa-solid fa-copy"></i>
+            </div>
+            <div class="stat-value">{{ available_copies }}</div>
+            <div class="stat-label">Available Copies</div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="stat-card">
+            <div class="stat-icon" style="background:#faf5ff; color:#9333ea;">
+                <i class="fa-solid fa-layer-group"></i>
+            </div>
+            <div class="stat-value">{{ total_copies }}</div>
+            <div class="stat-label">Total Copies</div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Borrows Table -->
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <span><i class="fa-solid fa-clock-rotate-left me-2 text-muted"></i>Recent Borrowing Activity</span>
+        <a href="/borrowing/" style="font-size:13px; color:#4f46e5; text-decoration:none; font-weight:500;">View all</a>
+    </div>
+    <div class="card-body p-0">
+        {% if recent_borrows %}
+        <div class="table-responsive">
+            <table class="table table-hover mb-0" style="font-size:13.5px;">
+                <thead style="background:#f9fafb;">
+                    <tr>
+                        <th class="px-4 py-3 text-muted fw-600" style="font-size:12px; text-transform:uppercase; letter-spacing:.04em;">Member</th>
+                        <th class="py-3 text-muted fw-600" style="font-size:12px; text-transform:uppercase; letter-spacing:.04em;">Book</th>
+                        <th class="py-3 text-muted fw-600" style="font-size:12px; text-transform:uppercase; letter-spacing:.04em;">Borrow Date</th>
+                        <th class="py-3 text-muted fw-600" style="font-size:12px; text-transform:uppercase; letter-spacing:.04em;">Due Date</th>
+                        <th class="py-3 text-muted fw-600" style="font-size:12px; text-transform:uppercase; letter-spacing:.04em;">Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for record in recent_borrows %}
+                    <tr>
+                        <td class="px-4 py-3">
+                            <div class="d-flex align-items-center gap-2">
+                                <div style="width:32px;height:32px;border-radius:50%;background:#eef2ff;color:#4f46e5;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;">
+                                    {{ record.member.user.first_name|first }}{{ record.member.user.last_name|first }}
+                                </div>
+                                <div>
+                                    <p style="margin:0;font-weight:600;color:#111827;">{{ record.member.user.get_full_name }}</p>
+                                    <p style="margin:0;color:#9ca3af;font-size:12px;">{{ record.member.card_number }}</p>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="py-3" style="color:#374151; max-width:200px;">
+                            <span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;">
+                                {{ record.book_copy.book.title }}
+                            </span>
+                        </td>
+                        <td class="py-3" style="color:#6b7280;">{{ record.borrow_date|date:"M d, Y" }}</td>
+                        <td class="py-3" style="color:#6b7280;">{{ record.due_date|date:"M d, Y" }}</td>
+                        <td class="py-3">
+                            {% if record.status == 'borrowed' %}
+                                {% if record.is_overdue %}
+                                <span class="badge" style="background:#fef2f2;color:#ef4444;font-size:11px;padding:4px 10px;border-radius:20px;font-weight:600;">Overdue</span>
+                                {% else %}
+                                <span class="badge" style="background:#fffbeb;color:#f59e0b;font-size:11px;padding:4px 10px;border-radius:20px;font-weight:600;">Borrowed</span>
+                                {% endif %}
+                            {% elif record.status == 'returned' %}
+                                <span class="badge" style="background:#ecfdf5;color:#10b981;font-size:11px;padding:4px 10px;border-radius:20px;font-weight:600;">Returned</span>
+                            {% else %}
+                                <span class="badge" style="background:#f3f4f6;color:#6b7280;font-size:11px;padding:4px 10px;border-radius:20px;font-weight:600;">{{ record.get_status_display }}</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-5" style="color:#9ca3af;">
+            <i class="fa-solid fa-inbox" style="font-size:32px;margin-bottom:12px;display:block;"></i>
+            <p style="margin:0;font-size:14px;">No borrowing activity yet.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
