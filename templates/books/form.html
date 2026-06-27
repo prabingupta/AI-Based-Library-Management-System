@@ -1,0 +1,157 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ action }} Book{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center gap-2 mb-4" style="font-size:13px;color:#6b7280;">
+    <a href="{% url 'books:list' %}" style="color:#4f46e5;text-decoration:none;">Books</a>
+    <i class="fa-solid fa-chevron-right" style="font-size:10px;"></i>
+    <span>{{ action }} Book</span>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-9">
+        <div class="card">
+            <div class="card-header">
+                <i class="fa-solid fa-book me-2 text-muted"></i>{{ action }} Book
+            </div>
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+
+                    <div class="form-section">
+                        <h3 class="form-section-title">Basic Information</h3>
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label class="form-label-custom">Title <span class="required">*</span></label>
+                                {{ form.title }}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label-custom">ISBN-10</label>
+                                {{ form.isbn }}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label-custom">ISBN-13</label>
+                                {{ form.isbn13 }}
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label-custom">Description</label>
+                                {{ form.description }}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label-custom">Cover Image</label>
+                                {{ form.cover_image }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3 class="form-section-title">Publication Details</h3>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label-custom">Authors</label>
+                                {{ form.authors }}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label-custom">Publisher</label>
+                                {{ form.publisher }}
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label-custom">Language</label>
+                                {{ form.language }}
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label-custom">Edition</label>
+                                {{ form.edition }}
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label-custom">Pages</label>
+                                {{ form.pages }}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label-custom">Publication Year</label>
+                                {{ form.publication_year }}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label-custom">Publication Date</label>
+                                {{ form.publication_date }}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h3 class="form-section-title">Library Info</h3>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="form-label-custom">Categories</label>
+                                {{ form.categories }}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label-custom">Shelf</label>
+                                {{ form.shelf }}
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label-custom">Status</label>
+                                {{ form.status }}
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label-custom">Total Copies</label>
+                                {{ form.total_copies }}
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label-custom">Available Copies</label>
+                                {{ form.available_copies }}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label-custom">Call Number</label>
+                                {{ form.call_number }}
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label-custom">Tags</label>
+                                {{ form.tags }}
+                            </div>
+                            <div class="col-12 d-flex gap-4">
+                                <div class="form-check">
+                                    {{ form.is_featured }}
+                                    <label class="form-check-label" style="font-size:13.5px;">Featured Book</label>
+                                </div>
+                                <div class="form-check">
+                                    {{ form.is_active }}
+                                    <label class="form-check-label" style="font-size:13.5px;">Active</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {% if form.errors %}
+                    <div class="alert" style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;color:#dc2626;font-size:13px;padding:12px 16px;margin-bottom:20px;">
+                        <i class="fa-solid fa-circle-exclamation me-2"></i>Please fix the errors below.
+                        {{ form.errors }}
+                    </div>
+                    {% endif %}
+
+                    <div class="d-flex gap-3 mt-2">
+                        <button type="submit" class="btn-submit">
+                            <i class="fa-solid fa-check me-2"></i>{{ action }} Book
+                        </button>
+                        <a href="{% url 'books:list' %}" class="btn-cancel">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.form-section { margin-bottom: 28px; padding-bottom: 28px; border-bottom: 1px solid #f3f4f6; }
+.form-section:last-of-type { border-bottom: none; }
+.form-section-title { font-size: 13px; font-weight: 700; color: #4f46e5; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 16px; }
+.form-label-custom { font-size: 13px; font-weight: 600; color: #374151; margin-bottom: 5px; display: block; }
+.required { color: #ef4444; }
+.btn-submit { background:#4f46e5;color:white;border:none;border-radius:8px;padding:10px 24px;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center; }
+.btn-submit:hover { background:#3730a3; }
+.btn-cancel { background:#f3f4f6;color:#6b7280;border:none;border-radius:8px;padding:10px 20px;font-size:14px;font-weight:500;text-decoration:none;display:inline-flex;align-items:center;transition:all .2s; }
+.btn-cancel:hover { background:#e5e7eb;color:#374151; }
+</style>
+{% endblock %}

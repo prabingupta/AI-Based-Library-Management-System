@@ -1,0 +1,199 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Books{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+        <h2 style="font-size:22px;font-weight:700;color:#111827;margin-bottom:2px;">Books</h2>
+        <p style="color:#6b7280;font-size:13.5px;margin:0;">{{ total_count }} book{{ total_count|pluralize }} in the library</p>
+    </div>
+    <a href="{% url 'books:add' %}" class="btn-add">
+        <i class="fa-solid fa-plus"></i> Add Book
+    </a>
+</div>
+
+<!-- Filters -->
+<div class="card mb-4">
+    <div class="card-body py-3">
+        <form method="get" class="row g-2 align-items-end">
+            <div class="col-md-5">
+                <div class="search-input-wrap">
+                    <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                    <input type="text" name="q" value="{{ query }}" class="form-control search-input" placeholder="Search by title, ISBN, author...">
+                </div>
+            </div>
+            <div class="col-md-3">
+                <select name="category" class="form-select" style="font-size:13.5px;">
+                    <option value="">All Categories</option>
+                    {% for cat in categories %}
+                    <option value="{{ cat.slug }}" {% if selected_category == cat.slug %}selected{% endif %}>{{ cat.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <select name="status" class="form-select" style="font-size:13.5px;">
+                    <option value="">All Status</option>
+                    <option value="available" {% if selected_status == 'available' %}selected{% endif %}>Available</option>
+                    <option value="unavailable" {% if selected_status == 'unavailable' %}selected{% endif %}>Unavailable</option>
+                    <option value="reserved" {% if selected_status == 'reserved' %}selected{% endif %}>Reserved</option>
+                </select>
+            </div>
+            <div class="col-md-2 d-flex gap-2">
+                <button type="submit" class="btn-filter">Filter</button>
+                <a href="{% url 'books:list' %}" class="btn-clear">Clear</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Books Grid -->
+{% if books %}
+<div class="row g-3">
+    {% for book in books %}
+    <div class="col-6 col-md-4 col-lg-3 col-xl-2">
+        <a href="{% url 'books:detail' book.pk %}" class="book-card-link">
+            <div class="book-card">
+                <div class="book-cover">
+                    {% if book.cover_image %}
+                        <img src="{{ book.cover_image.url }}" alt="{{ book.title }}">
+                    {% else %}
+                        <div class="book-cover-placeholder">
+                            <i class="fa-solid fa-book"></i>
+                        </div>
+                    {% endif %}
+                    <div class="book-status-badge status-{{ book.status }}">
+                        {{ book.get_status_display }}
+                    </div>
+                </div>
+                <div class="book-info">
+                    <p class="book-title">{{ book.title|truncatechars:45 }}</p>
+                    <p class="book-author">
+                        {% for author in book.authors.all|slice:":2" %}
+                            {{ author.full_name }}{% if not forloop.last %}, {% endif %}
+                        {% empty %}
+                            Unknown Author
+                        {% endfor %}
+                    </p>
+                    <div class="book-meta">
+                        <span><i class="fa-solid fa-copy"></i> {{ book.available_copies }}/{{ book.total_copies }}</span>
+                        {% if book.is_featured %}
+                        <span class="featured-badge"><i class="fa-solid fa-star"></i></span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </a>
+    </div>
+    {% endfor %}
+</div>
+{% else %}
+<div class="empty-state">
+    <i class="fa-solid fa-books"></i>
+    <h3>No books found</h3>
+    <p>{% if query %}No results for "{{ query }}". Try a different search.{% else %}Start by adding your first book.{% endif %}</p>
+    {% if not query %}
+    <a href="{% url 'books:add' %}" class="btn-add mt-3">
+        <i class="fa-solid fa-plus"></i> Add First Book
+    </a>
+    {% endif %}
+</div>
+{% endif %}
+
+<style>
+.btn-add {
+    display: inline-flex; align-items: center; gap: 7px;
+    background: #4f46e5; color: white;
+    padding: 9px 18px; border-radius: 8px;
+    font-size: 13.5px; font-weight: 600;
+    text-decoration: none; transition: all .2s;
+    border: none; cursor: pointer;
+}
+.btn-add:hover { background: #3730a3; color: white; }
+
+.btn-filter {
+    background: #4f46e5; color: white;
+    border: none; border-radius: 8px;
+    padding: 8px 16px; font-size: 13.5px;
+    font-weight: 600; cursor: pointer;
+    transition: all .2s; white-space: nowrap;
+}
+.btn-filter:hover { background: #3730a3; }
+
+.btn-clear {
+    background: #f3f4f6; color: #6b7280;
+    border: none; border-radius: 8px;
+    padding: 8px 16px; font-size: 13.5px;
+    font-weight: 500; text-decoration: none;
+    transition: all .2s; white-space: nowrap;
+    display: inline-flex; align-items: center;
+}
+.btn-clear:hover { background: #e5e7eb; color: #374151; }
+
+.search-input-wrap { position: relative; }
+.search-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #9ca3af; font-size: 13px; }
+.search-input { padding-left: 36px; font-size: 13.5px; }
+
+.book-card-link { text-decoration: none; display: block; }
+.book-card {
+    background: white;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    overflow: hidden;
+    transition: all .2s;
+}
+.book-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,.1); transform: translateY(-2px); }
+
+.book-cover {
+    position: relative;
+    height: 160px;
+    background: #f3f4f6;
+    overflow: hidden;
+}
+.book-cover img { width: 100%; height: 100%; object-fit: cover; }
+.book-cover-placeholder {
+    width: 100%; height: 100%;
+    display: flex; align-items: center; justify-content: center;
+    background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%);
+    color: #a5b4fc; font-size: 36px;
+}
+
+.book-status-badge {
+    position: absolute; top: 8px; right: 8px;
+    font-size: 10px; font-weight: 700;
+    padding: 3px 8px; border-radius: 20px;
+    text-transform: uppercase; letter-spacing: .04em;
+}
+.status-available { background: #ecfdf5; color: #10b981; }
+.status-unavailable { background: #fef2f2; color: #ef4444; }
+.status-reserved { background: #fffbeb; color: #f59e0b; }
+.status-lost { background: #fef2f2; color: #ef4444; }
+.status-damaged { background: #fff7ed; color: #f97316; }
+
+.book-info { padding: 12px; }
+.book-title {
+    font-size: 13px; font-weight: 600;
+    color: #111827; margin-bottom: 4px;
+    line-height: 1.4;
+    display: -webkit-box; -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical; overflow: hidden;
+}
+.book-author { font-size: 11.5px; color: #6b7280; margin-bottom: 8px; }
+.book-meta {
+    display: flex; align-items: center;
+    justify-content: space-between;
+    font-size: 11px; color: #9ca3af;
+}
+.book-meta i { margin-right: 3px; }
+.featured-badge { color: #f59e0b; }
+
+.empty-state {
+    text-align: center; padding: 80px 20px;
+    color: #9ca3af;
+}
+.empty-state i { font-size: 48px; margin-bottom: 16px; display: block; }
+.empty-state h3 { font-size: 18px; font-weight: 600; color: #6b7280; margin-bottom: 8px; }
+.empty-state p { font-size: 14px; }
+</style>
+{% endblock %}
