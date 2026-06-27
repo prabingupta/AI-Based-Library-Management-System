@@ -1,0 +1,59 @@
+<header class="top-navbar">
+    <div class="navbar-left">
+        <button class="sidebar-toggle-btn" id="sidebarToggle">
+            <i class="fa-solid fa-bars"></i>
+        </button>
+        {% block page_title %}
+        <h1 class="page-heading">Dashboard</h1>
+        {% endblock %}
+    </div>
+
+    <div class="navbar-right">
+        <button class="icon-btn" title="Search">
+            <i class="fa-solid fa-magnifying-glass"></i>
+        </button>
+
+        <div class="dropdown">
+            <button class="icon-btn position-relative" data-bs-toggle="dropdown">
+                <i class="fa-solid fa-bell"></i>
+                <span class="notif-dot"></span>
+            </button>
+            <div class="dropdown-menu dropdown-menu-end notif-dropdown p-0">
+                <div class="notif-header px-3 py-2">
+                    <span class="fw-600">Notifications</span>
+                    <a href="/notifications/" class="text-primary small">View all</a>
+                </div>
+                <div class="notif-body px-3 py-3 text-muted small text-center">
+                    No new notifications
+                </div>
+            </div>
+        </div>
+
+        <div class="dropdown">
+            <button class="user-menu-btn" data-bs-toggle="dropdown">
+                <div class="nav-avatar">
+                    {% if user.avatar %}
+                        <img src="{{ user.avatar.url }}" alt="">
+                    {% else %}
+                        <span>{{ user.first_name|first }}{{ user.last_name|first }}</span>
+                    {% endif %}
+                </div>
+                <span class="d-none d-md-inline">{{ user.first_name }}</span>
+                <i class="fa-solid fa-chevron-down small"></i>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end">
+                <li><a class="dropdown-item" href="#"><i class="fa-solid fa-user me-2"></i>Profile</a></li>
+                <li><a class="dropdown-item" href="#"><i class="fa-solid fa-gear me-2"></i>Settings</a></li>
+                <li><hr class="dropdown-divider"></li>
+                <li>
+                    <form method="post" action="/accounts/logout/">
+                        {% csrf_token %}
+                        <button type="submit" class="dropdown-item text-danger">
+                            <i class="fa-solid fa-right-from-bracket me-2"></i>Logout
+                        </button>
+                    </form>
+                </li>
+            </ul>
+        </div>
+    </div>
+</header>
