@@ -1,10 +1,10 @@
 <aside class="sidebar" id="sidebar">
     <div class="sidebar-header">
-        <div class="sidebar-logo">
+        <a href="{% url 'dashboard:index' %}" class="sidebar-logo">
             <i class="fa-solid fa-book-open-reader"></i>
             <span class="logo-text">LibraryOS</span>
-        </div>
-        <button class="sidebar-toggle d-lg-none" id="sidebarClose">
+        </a>
+        <button class="sidebar-toggle-btn d-lg-none" id="sidebarClose" style="display:flex!important;">
             <i class="fa-solid fa-xmark"></i>
         </button>
     </div>
@@ -12,7 +12,7 @@
     <nav class="sidebar-nav">
         <div class="nav-section">
             <span class="nav-label">Main</span>
-            <a href="/dashboard/" class="nav-item {% if request.path == '/dashboard/' %}active{% endif %}">
+            <a href="{% url 'dashboard:index' %}" class="nav-item {% if request.resolver_match.app_name == 'dashboard' %}active{% endif %}">
                 <i class="fa-solid fa-gauge-high"></i>
                 <span>Dashboard</span>
             </a>
@@ -20,32 +20,29 @@
 
         <div class="nav-section">
             <span class="nav-label">Library</span>
-            <a href="/books/" class="nav-item {% if '/books/' in request.path %}active{% endif %}">
+            <a href="{% url 'books:list' %}" class="nav-item {% if request.resolver_match.app_name == 'books' %}active{% endif %}">
                 <i class="fa-solid fa-books"></i>
                 <span>Books</span>
             </a>
-            <a href="/members/" class="nav-item {% if '/members/' in request.path %}active{% endif %}">
+            <a href="{% url 'members:list' %}" class="nav-item {% if request.resolver_match.app_name == 'members' %}active{% endif %}">
                 <i class="fa-solid fa-users"></i>
                 <span>Members</span>
             </a>
-            <a href="/borrowing/" class="nav-item {% if '/borrowing/' in request.path %}active{% endif %}">
+            <a href="{% url 'borrowing:list' %}" class="nav-item {% if request.resolver_match.app_name == 'borrowing' %}active{% endif %}">
                 <i class="fa-solid fa-arrow-right-arrow-left"></i>
                 <span>Borrowing</span>
             </a>
         </div>
 
         <div class="nav-section">
-            <span class="nav-label">Reports</span>
-            <a href="/reports/" class="nav-item {% if '/reports/' in request.path %}active{% endif %}">
+            <span class="nav-label">Insights</span>
+            <a href="{% url 'reports:index' %}" class="nav-item {% if request.resolver_match.app_name == 'reports' %}active{% endif %}">
                 <i class="fa-solid fa-chart-bar"></i>
                 <span>Reports</span>
             </a>
-            <a href="/notifications/" class="nav-item {% if '/notifications/' in request.path %}active{% endif %}">
+            <a href="{% url 'notifications:list' %}" class="nav-item {% if request.resolver_match.app_name == 'notifications' %}active{% endif %}">
                 <i class="fa-solid fa-bell"></i>
                 <span>Notifications</span>
-                {% if unread_notifications_count %}
-                <span class="badge-count">{{ unread_notifications_count }}</span>
-                {% endif %}
             </a>
         </div>
 
@@ -61,18 +58,18 @@
     </nav>
 
     <div class="sidebar-footer">
-        <div class="user-info">
+        <a href="{% url 'accounts:profile' %}" class="user-info" style="text-decoration:none;">
             <div class="user-avatar">
                 {% if user.avatar %}
                     <img src="{{ user.avatar.url }}" alt="{{ user.full_name }}">
                 {% else %}
-                    <span>{{ user.first_name|first }}{{ user.last_name|first }}</span>
+                    {{ user.first_name|first }}{{ user.last_name|first }}
                 {% endif %}
             </div>
             <div class="user-details">
                 <p class="user-name">{{ user.get_full_name }}</p>
                 <p class="user-role">{{ user.get_role_display }}</p>
             </div>
-        </div>
+        </a>
     </div>
 </aside>

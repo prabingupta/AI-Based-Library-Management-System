@@ -1,8 +1,10 @@
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.decorators import login_required
+from django.utils.decorators import method_decorator
 from django.contrib import messages
 from django.views import View
-from .forms import LoginForm
+from .forms import LoginForm, ProfileForm
 
 
 class LoginView(View):
@@ -38,3 +40,28 @@ class LogoutView(View):
         logout(request)
         messages.success(request, 'You have been logged out successfully.')
         return redirect('accounts:login')
+
+
+@method_decorator(login_required, name='dispatch')
+class ProfileView(View):
+    template_name = 'accounts/profile.html'
+
+    def get(self, request):
+        form = ProfileForm(instance=request.user)
+        context = {
+            'form': form,
+            'page_title': 'My Profile',
+        }
+        return render(request, self.template_name, context)
+
+    def post(self, request):
+        form = ProfileForm(request.POST, request.FILES, instance=request.user)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Profile updated successfully.')
+            return redirect('accounts:profile')
+        context = {
+            'form': form,
+            'page_title': 'My Profile',
+        }
+        return render(request, self.template_name, context)

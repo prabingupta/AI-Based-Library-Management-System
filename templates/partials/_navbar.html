@@ -3,27 +3,29 @@
         <button class="sidebar-toggle-btn" id="sidebarToggle">
             <i class="fa-solid fa-bars"></i>
         </button>
-        {% block page_title %}
-        <h1 class="page-heading">Dashboard</h1>
-        {% endblock %}
+        <h1 class="page-heading">{% block page_title %}{{ page_title|default:"Dashboard" }}{% endblock %}</h1>
     </div>
 
     <div class="navbar-right">
-        <button class="icon-btn" title="Search">
+        <button class="icon-btn" title="Search (coming soon)">
             <i class="fa-solid fa-magnifying-glass"></i>
         </button>
 
+        <button class="theme-toggle" id="themeToggle" title="Toggle dark mode">
+            <i class="fa-solid fa-moon" id="themeIcon"></i>
+        </button>
+
         <div class="dropdown">
-            <button class="icon-btn position-relative" data-bs-toggle="dropdown">
+            <button class="icon-btn position-relative" data-bs-toggle="dropdown" title="Notifications">
                 <i class="fa-solid fa-bell"></i>
                 <span class="notif-dot"></span>
             </button>
             <div class="dropdown-menu dropdown-menu-end notif-dropdown p-0">
-                <div class="notif-header px-3 py-2">
-                    <span class="fw-600">Notifications</span>
-                    <a href="/notifications/" class="text-primary small">View all</a>
+                <div class="notif-header">
+                    <span style="font-weight:600;font-size:13.5px;">Notifications</span>
+                    <a href="{% url 'notifications:list' %}" style="color:var(--primary);font-size:12.5px;text-decoration:none;font-weight:500;">View all</a>
                 </div>
-                <div class="notif-body px-3 py-3 text-muted small text-center">
+                <div style="padding:20px;text-align:center;color:var(--text-muted);font-size:13px;">
                     No new notifications
                 </div>
             </div>
@@ -35,21 +37,29 @@
                     {% if user.avatar %}
                         <img src="{{ user.avatar.url }}" alt="">
                     {% else %}
-                        <span>{{ user.first_name|first }}{{ user.last_name|first }}</span>
+                        {{ user.first_name|first }}{{ user.last_name|first }}
                     {% endif %}
                 </div>
-                <span class="d-none d-md-inline">{{ user.first_name }}</span>
-                <i class="fa-solid fa-chevron-down small"></i>
+                <span class="d-none d-md-inline" style="color:var(--text-primary);">{{ user.first_name }}</span>
+                <i class="fa-solid fa-chevron-down" style="font-size:10px;color:var(--text-muted);"></i>
             </button>
-            <ul class="dropdown-menu dropdown-menu-end">
-                <li><a class="dropdown-item" href="#"><i class="fa-solid fa-user me-2"></i>Profile</a></li>
-                <li><a class="dropdown-item" href="#"><i class="fa-solid fa-gear me-2"></i>Settings</a></li>
+            <ul class="dropdown-menu dropdown-menu-end" style="min-width:180px;">
+                <li>
+                    <a class="dropdown-item" href="{% url 'accounts:profile' %}">
+                        <i class="fa-solid fa-user me-2" style="color:var(--text-muted);width:16px;"></i>Profile
+                    </a>
+                </li>
+                <li>
+                    <a class="dropdown-item" href="#">
+                        <i class="fa-solid fa-gear me-2" style="color:var(--text-muted);width:16px;"></i>Settings
+                    </a>
+                </li>
                 <li><hr class="dropdown-divider"></li>
                 <li>
-                    <form method="post" action="/accounts/logout/">
+                    <form method="post" action="{% url 'accounts:logout' %}">
                         {% csrf_token %}
-                        <button type="submit" class="dropdown-item text-danger">
-                            <i class="fa-solid fa-right-from-bracket me-2"></i>Logout
+                        <button type="submit" class="dropdown-item" style="color:var(--danger);width:100%;text-align:left;">
+                            <i class="fa-solid fa-right-from-bracket me-2" style="width:16px;"></i>Logout
                         </button>
                     </form>
                 </li>

@@ -1,0 +1,136 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}My Profile{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <h2 style="font-size:22px;font-weight:700;color:var(--text-primary);margin-bottom:4px;">My Profile</h2>
+    <p style="color:var(--text-secondary);font-size:14px;margin:0;">Manage your account information.</p>
+</div>
+
+<div class="row g-4">
+    <!-- Profile Card -->
+    <div class="col-md-4">
+        <div class="card text-center p-4">
+            <div class="profile-avatar mx-auto mb-3">
+                {% if user.avatar %}
+                    <img src="{{ user.avatar.url }}" alt="">
+                {% else %}
+                    {{ user.first_name|first }}{{ user.last_name|first }}
+                {% endif %}
+            </div>
+            <h3 style="font-size:18px;font-weight:700;color:var(--text-primary);margin-bottom:4px;">{{ user.get_full_name }}</h3>
+            <p style="color:var(--text-secondary);font-size:13px;margin-bottom:12px;">{{ user.email }}</p>
+            <span style="background:var(--primary-light);color:var(--primary);font-size:12px;padding:4px 14px;border-radius:20px;font-weight:600;">
+                {{ user.get_role_display }}
+            </span>
+
+            <div style="margin-top:24px;text-align:left;font-size:13px;">
+                <div class="d-flex justify-content-between py-2" style="border-bottom:1px solid var(--border);">
+                    <span style="color:var(--text-secondary);">Username</span>
+                    <strong style="color:var(--text-primary);">{{ user.username }}</strong>
+                </div>
+                <div class="d-flex justify-content-between py-2" style="border-bottom:1px solid var(--border);">
+                    <span style="color:var(--text-secondary);">Phone</span>
+                    <strong style="color:var(--text-primary);">{{ user.phone|default:"-" }}</strong>
+                </div>
+                <div class="d-flex justify-content-between py-2" style="border-bottom:1px solid var(--border);">
+                    <span style="color:var(--text-secondary);">Email Verified</span>
+                    {% if user.is_email_verified %}
+                        <span style="color:#10b981;font-weight:600;"><i class="fa-solid fa-check-circle me-1"></i>Yes</span>
+                    {% else %}
+                        <span style="color:#9ca3af;">No</span>
+                    {% endif %}
+                </div>
+                <div class="d-flex justify-content-between py-2">
+                    <span style="color:var(--text-secondary);">Member Since</span>
+                    <strong style="color:var(--text-primary);">{{ user.date_joined|date:"M Y" }}</strong>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Form -->
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <i class="fa-solid fa-pen-to-square me-2" style="color:var(--text-muted);"></i>Edit Profile
+            </div>
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label-custom">First Name</label>
+                            {{ form.first_name }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label-custom">Last Name</label>
+                            {{ form.last_name }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label-custom">Email</label>
+                            {{ form.email }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label-custom">Phone</label>
+                            {{ form.phone }}
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label-custom">Profile Picture</label>
+                            {{ form.avatar }}
+                            {% if user.avatar %}
+                            <p style="font-size:12px;color:var(--text-muted);margin-top:6px;">
+                                Current: <a href="{{ user.avatar.url }}" target="_blank" style="color:var(--primary);">View photo</a>
+                            </p>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    {% if form.errors %}
+                    <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;color:#dc2626;font-size:13px;padding:12px 16px;margin-top:16px;">
+                        <i class="fa-solid fa-circle-exclamation me-2"></i>Please fix the errors above.
+                    </div>
+                    {% endif %}
+
+                    <div class="d-flex gap-3 mt-4">
+                        <button type="submit" class="btn-submit">
+                            <i class="fa-solid fa-check me-2"></i>Save Changes
+                        </button>
+                        <a href="{% url 'dashboard:index' %}" class="btn-cancel">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Security Card -->
+        <div class="card mt-3">
+            <div class="card-header">
+                <i class="fa-solid fa-shield-halved me-2" style="color:var(--text-muted);"></i>Security
+            </div>
+            <div class="card-body">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <p style="font-weight:600;color:var(--text-primary);margin-bottom:2px;font-size:14px;">Password</p>
+                        <p style="color:var(--text-muted);font-size:13px;margin:0;">Last changed: unknown</p>
+                    </div>
+                    <a href="#" style="font-size:13.5px;color:var(--primary);font-weight:600;text-decoration:none;">
+                        Change Password
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.profile-avatar { width:80px;height:80px;border-radius:50%;background:var(--primary-light);color:var(--primary);font-size:28px;font-weight:700;display:flex;align-items:center;justify-content:center;overflow:hidden; }
+.profile-avatar img { width:100%;height:100%;object-fit:cover; }
+.form-label-custom { font-size:13px;font-weight:600;color:var(--text-secondary);margin-bottom:5px;display:block; }
+.btn-submit { background:var(--primary);color:white;border:none;border-radius:8px;padding:10px 24px;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center; }
+.btn-submit:hover { background:var(--primary-dark); }
+.btn-cancel { background:var(--border-light);color:var(--text-secondary);border:none;border-radius:8px;padding:10px 20px;font-size:14px;font-weight:500;text-decoration:none;display:inline-flex;align-items:center;transition:all .2s; }
+.btn-cancel:hover { background:var(--border); }
+</style>
+{% endblock %}
