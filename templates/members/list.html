@@ -1,0 +1,162 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Members{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+        <h2 style="font-size:22px;font-weight:700;color:#111827;margin-bottom:2px;">Members</h2>
+        <p style="color:#6b7280;font-size:13.5px;margin:0;">{{ total_count }} member{{ total_count|pluralize }} registered</p>
+    </div>
+    <a href="{% url 'members:add' %}" class="btn-add">
+        <i class="fa-solid fa-plus"></i> Add Member
+    </a>
+</div>
+
+<!-- Filters -->
+<div class="card mb-4">
+    <div class="card-body py-3">
+        <form method="get" class="row g-2 align-items-end">
+            <div class="col-md-5">
+                <div class="search-input-wrap">
+                    <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                    <input type="text" name="q" value="{{ query }}" class="form-control search-input" placeholder="Search by name, email, card number...">
+                </div>
+            </div>
+            <div class="col-md-2">
+                <select name="type" class="form-select" style="font-size:13.5px;">
+                    <option value="">All Types</option>
+                    <option value="student" {% if selected_type == 'student' %}selected{% endif %}>Student</option>
+                    <option value="teacher" {% if selected_type == 'teacher' %}selected{% endif %}>Teacher</option>
+                    <option value="guest" {% if selected_type == 'guest' %}selected{% endif %}>Guest</option>
+                    <option value="staff" {% if selected_type == 'staff' %}selected{% endif %}>Staff</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <select name="status" class="form-select" style="font-size:13.5px;">
+                    <option value="">All Status</option>
+                    <option value="active" {% if selected_status == 'active' %}selected{% endif %}>Active</option>
+                    <option value="inactive" {% if selected_status == 'inactive' %}selected{% endif %}>Inactive</option>
+                    <option value="suspended" {% if selected_status == 'suspended' %}selected{% endif %}>Suspended</option>
+                    <option value="expired" {% if selected_status == 'expired' %}selected{% endif %}>Expired</option>
+                </select>
+            </div>
+            <div class="col-md-3 d-flex gap-2">
+                <button type="submit" class="btn-filter">Filter</button>
+                <a href="{% url 'members:list' %}" class="btn-clear">Clear</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Members Table -->
+<div class="card">
+    <div class="card-body p-0">
+        {% if members %}
+        <div class="table-responsive">
+            <table class="table table-hover mb-0" style="font-size:13.5px;">
+                <thead style="background:#f9fafb;">
+                    <tr>
+                        <th class="px-4 py-3" style="font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:#6b7280;font-weight:600;">Member</th>
+                        <th class="py-3" style="font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:#6b7280;font-weight:600;">Card No.</th>
+                        <th class="py-3" style="font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:#6b7280;font-weight:600;">Type</th>
+                        <th class="py-3" style="font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:#6b7280;font-weight:600;">Status</th>
+                        <th class="py-3" style="font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:#6b7280;font-weight:600;">Fine Balance</th>
+                        <th class="py-3" style="font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:#6b7280;font-weight:600;">Books</th>
+                        <th class="py-3" style="font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:#6b7280;font-weight:600;">Joined</th>
+                        <th class="py-3"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for member in members %}
+                    <tr>
+                        <td class="px-4 py-3">
+                            <div class="d-flex align-items-center gap-3">
+                                <div class="member-avatar">
+                                    {% if member.user.avatar %}
+                                        <img src="{{ member.user.avatar.url }}" alt="">
+                                    {% else %}
+                                        {{ member.user.first_name|first }}{{ member.user.last_name|first }}
+                                    {% endif %}
+                                </div>
+                                <div>
+                                    <p style="margin:0;font-weight:600;color:#111827;">{{ member.user.get_full_name }}</p>
+                                    <p style="margin:0;color:#9ca3af;font-size:12px;">{{ member.user.email }}</p>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="py-3">
+                            <code style="background:#f3f4f6;padding:3px 8px;border-radius:4px;font-size:12px;color:#374151;">{{ member.card_number }}</code>
+                        </td>
+                        <td class="py-3">
+                            <span class="type-chip type-{{ member.membership_type }}">{{ member.get_membership_type_display }}</span>
+                        </td>
+                        <td class="py-3">
+                            <span class="status-chip status-{{ member.status }}">{{ member.get_status_display }}</span>
+                        </td>
+                        <td class="py-3">
+                            {% if member.fine_balance > 0 %}
+                                <span style="color:#ef4444;font-weight:600;">Rs. {{ member.fine_balance }}</span>
+                            {% else %}
+                                <span style="color:#10b981;font-weight:500;">Clear</span>
+                            {% endif %}
+                        </td>
+                        <td class="py-3" style="color:#374151;">
+                            {{ member.current_borrow_count }}/{{ member.max_books_allowed }}
+                        </td>
+                        <td class="py-3" style="color:#6b7280;">{{ member.created_at|date:"M d, Y" }}</td>
+                        <td class="py-3 pe-4">
+                            <div class="d-flex gap-2">
+                                <a href="{% url 'members:detail' member.pk %}" class="action-btn" title="View">
+                                    <i class="fa-solid fa-eye"></i>
+                                </a>
+                                <a href="{% url 'members:edit' member.pk %}" class="action-btn" title="Edit">
+                                    <i class="fa-solid fa-pen-to-square"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-5" style="color:#9ca3af;">
+            <i class="fa-solid fa-users" style="font-size:40px;margin-bottom:12px;display:block;"></i>
+            <p style="font-size:15px;font-weight:600;color:#6b7280;margin-bottom:6px;">No members found</p>
+            <p style="font-size:13.5px;margin-bottom:20px;">{% if query %}Try a different search term.{% else %}Start by adding your first member.{% endif %}</p>
+            {% if not query %}
+            <a href="{% url 'members:add' %}" class="btn-add"><i class="fa-solid fa-plus"></i> Add Member</a>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+.btn-add { display:inline-flex;align-items:center;gap:7px;background:#4f46e5;color:white;padding:9px 18px;border-radius:8px;font-size:13.5px;font-weight:600;text-decoration:none;transition:all .2s;border:none;cursor:pointer; }
+.btn-add:hover { background:#3730a3;color:white; }
+.btn-filter { background:#4f46e5;color:white;border:none;border-radius:8px;padding:8px 16px;font-size:13.5px;font-weight:600;cursor:pointer;transition:all .2s; }
+.btn-filter:hover { background:#3730a3; }
+.btn-clear { background:#f3f4f6;color:#6b7280;border:none;border-radius:8px;padding:8px 16px;font-size:13.5px;font-weight:500;text-decoration:none;display:inline-flex;align-items:center;transition:all .2s; }
+.btn-clear:hover { background:#e5e7eb;color:#374151; }
+.search-input-wrap { position:relative; }
+.search-icon { position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#9ca3af;font-size:13px; }
+.search-input { padding-left:36px;font-size:13.5px; }
+.member-avatar { width:36px;height:36px;border-radius:50%;background:#eef2ff;color:#4f46e5;font-size:13px;font-weight:700;display:flex;align-items:center;justify-content:center;overflow:hidden;flex-shrink:0; }
+.member-avatar img { width:100%;height:100%;object-fit:cover; }
+.type-chip { font-size:11.5px;padding:3px 10px;border-radius:20px;font-weight:600; }
+.type-student { background:#eef2ff;color:#4f46e5; }
+.type-teacher { background:#ecfdf5;color:#10b981; }
+.type-guest { background:#f3f4f6;color:#6b7280; }
+.type-staff { background:#fffbeb;color:#f59e0b; }
+.status-chip { font-size:11.5px;padding:3px 10px;border-radius:20px;font-weight:600; }
+.status-active { background:#ecfdf5;color:#10b981; }
+.status-inactive { background:#f3f4f6;color:#6b7280; }
+.status-suspended { background:#fef2f2;color:#ef4444; }
+.status-expired { background:#fff7ed;color:#f97316; }
+.action-btn { width:30px;height:30px;border-radius:6px;background:#f3f4f6;color:#6b7280;display:inline-flex;align-items:center;justify-content:center;text-decoration:none;font-size:12px;transition:all .2s; }
+.action-btn:hover { background:#eef2ff;color:#4f46e5; }
+</style>
+{% endblock %}

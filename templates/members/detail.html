@@ -1,0 +1,173 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ member.user.get_full_name }}{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center gap-2 mb-4" style="font-size:13px;color:#6b7280;">
+    <a href="{% url 'members:list' %}" style="color:#4f46e5;text-decoration:none;">Members</a>
+    <i class="fa-solid fa-chevron-right" style="font-size:10px;"></i>
+    <span>{{ member.user.get_full_name }}</span>
+</div>
+
+<div class="row g-4">
+    <!-- Profile Card -->
+    <div class="col-md-4">
+        <div class="card mb-3">
+            <div class="card-body text-center p-4">
+                <div class="profile-avatar mx-auto mb-3">
+                    {% if member.user.avatar %}
+                        <img src="{{ member.user.avatar.url }}" alt="">
+                    {% else %}
+                        {{ member.user.first_name|first }}{{ member.user.last_name|first }}
+                    {% endif %}
+                </div>
+                <h2 style="font-size:18px;font-weight:700;color:#111827;margin-bottom:4px;">{{ member.user.get_full_name }}</h2>
+                <p style="font-size:13px;color:#6b7280;margin-bottom:12px;">{{ member.user.email }}</p>
+
+                <span class="status-chip status-{{ member.status }}" style="font-size:12px;padding:5px 14px;">
+                    {{ member.get_status_display }}
+                </span>
+
+                <div style="margin-top:20px;text-align:left;font-size:13px;">
+                    <div class="d-flex justify-content-between py-2" style="border-bottom:1px solid #f3f4f6;">
+                        <span style="color:#6b7280;">Card Number</span>
+                        <code style="background:#f3f4f6;padding:2px 8px;border-radius:4px;font-size:12px;">{{ member.card_number }}</code>
+                    </div>
+                    <div class="d-flex justify-content-between py-2" style="border-bottom:1px solid #f3f4f6;">
+                        <span style="color:#6b7280;">Membership</span>
+                        <span class="type-chip type-{{ member.membership_type }}">{{ member.get_membership_type_display }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between py-2" style="border-bottom:1px solid #f3f4f6;">
+                        <span style="color:#6b7280;">Phone</span>
+                        <strong style="color:#111827;">{{ member.user.phone|default:"-" }}</strong>
+                    </div>
+                    <div class="d-flex justify-content-between py-2" style="border-bottom:1px solid #f3f4f6;">
+                        <span style="color:#6b7280;">Books Limit</span>
+                        <strong style="color:#111827;">{{ member.current_borrow_count }}/{{ member.max_books_allowed }}</strong>
+                    </div>
+                    <div class="d-flex justify-content-between py-2">
+                        <span style="color:#6b7280;">Fine Balance</span>
+                        {% if member.fine_balance > 0 %}
+                            <strong style="color:#ef4444;">Rs. {{ member.fine_balance }}</strong>
+                        {% else %}
+                            <strong style="color:#10b981;">Clear</strong>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <a href="{% url 'members:edit' member.pk %}" class="btn-add w-100 justify-content-center mb-2" style="display:flex;">
+            <i class="fa-solid fa-pen-to-square"></i> Edit Member
+        </a>
+        <form method="post" action="{% url 'members:delete' member.pk %}" onsubmit="return confirm('Delete this member?')">
+            {% csrf_token %}
+            <button type="submit" class="btn-danger-outline w-100">
+                <i class="fa-solid fa-trash"></i> Delete Member
+            </button>
+        </form>
+    </div>
+
+    <!-- Membership Info + Borrow History -->
+    <div class="col-md-8">
+        {% if member.membership_start or member.membership_end %}
+        <div class="card mb-3">
+            <div class="card-header"><i class="fa-solid fa-id-card me-2 text-muted"></i>Membership Period</div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-sm-6">
+                        <p class="detail-label">Start Date</p>
+                        <p class="detail-value">{{ member.membership_start|date:"M d, Y"|default:"-" }}</p>
+                    </div>
+                    <div class="col-sm-6">
+                        <p class="detail-label">End Date</p>
+                        <p class="detail-value">{{ member.membership_end|date:"M d, Y"|default:"-" }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Borrow History -->
+        <div class="card">
+            <div class="card-header"><i class="fa-solid fa-clock-rotate-left me-2 text-muted"></i>Borrow History</div>
+            <div class="card-body p-0">
+                {% if borrow_history %}
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0" style="font-size:13.5px;">
+                        <thead style="background:#f9fafb;">
+                            <tr>
+                                <th class="px-4 py-3" style="font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:#6b7280;font-weight:600;">Book</th>
+                                <th class="py-3" style="font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:#6b7280;font-weight:600;">Borrowed</th>
+                                <th class="py-3" style="font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:#6b7280;font-weight:600;">Due</th>
+                                <th class="py-3" style="font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:#6b7280;font-weight:600;">Status</th>
+                                <th class="py-3" style="font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:#6b7280;font-weight:600;">Fine</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for record in borrow_history %}
+                            <tr>
+                                <td class="px-4 py-3" style="font-weight:500;color:#111827;max-width:200px;">
+                                    <span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;">
+                                        {{ record.book_copy.book.title|truncatechars:35 }}
+                                    </span>
+                                    <span style="font-size:11px;color:#9ca3af;">{{ record.book_copy.barcode }}</span>
+                                </td>
+                                <td class="py-3" style="color:#6b7280;">{{ record.borrow_date|date:"M d, Y" }}</td>
+                                <td class="py-3" style="color:#6b7280;">{{ record.due_date|date:"M d, Y" }}</td>
+                                <td class="py-3">
+                                    {% if record.status == 'borrowed' and record.is_overdue %}
+                                        <span class="status-chip" style="background:#fef2f2;color:#ef4444;">Overdue</span>
+                                    {% elif record.status == 'borrowed' %}
+                                        <span class="status-chip" style="background:#fffbeb;color:#f59e0b;">Borrowed</span>
+                                    {% elif record.status == 'returned' %}
+                                        <span class="status-chip" style="background:#ecfdf5;color:#10b981;">Returned</span>
+                                    {% else %}
+                                        <span class="status-chip" style="background:#f3f4f6;color:#6b7280;">{{ record.get_status_display }}</span>
+                                    {% endif %}
+                                </td>
+                                <td class="py-3">
+                                    {% if record.fine_amount > 0 %}
+                                        <span style="color:#ef4444;font-weight:600;">Rs. {{ record.fine_amount }}</span>
+                                    {% else %}
+                                        <span style="color:#9ca3af;">-</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center py-5" style="color:#9ca3af;">
+                    <i class="fa-solid fa-inbox" style="font-size:28px;margin-bottom:10px;display:block;"></i>
+                    <p style="font-size:13.5px;margin:0;">No borrow history yet.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.btn-add { display:inline-flex;align-items:center;gap:7px;background:#4f46e5;color:white;padding:9px 18px;border-radius:8px;font-size:13.5px;font-weight:600;text-decoration:none;transition:all .2s;border:none;cursor:pointer; }
+.btn-add:hover { background:#3730a3;color:white; }
+.btn-danger-outline { display:flex;align-items:center;justify-content:center;gap:7px;background:transparent;color:#ef4444;border:1px solid #fecaca;border-radius:8px;padding:9px;font-size:13.5px;font-weight:600;cursor:pointer;transition:all .2s;width:100%; }
+.btn-danger-outline:hover { background:#fef2f2; }
+.profile-avatar { width:72px;height:72px;border-radius:50%;background:#eef2ff;color:#4f46e5;font-size:24px;font-weight:700;display:flex;align-items:center;justify-content:center;overflow:hidden; }
+.profile-avatar img { width:100%;height:100%;object-fit:cover; }
+.type-chip { font-size:11.5px;padding:3px 10px;border-radius:20px;font-weight:600; }
+.type-student { background:#eef2ff;color:#4f46e5; }
+.type-teacher { background:#ecfdf5;color:#10b981; }
+.type-guest { background:#f3f4f6;color:#6b7280; }
+.type-staff { background:#fffbeb;color:#f59e0b; }
+.status-chip { font-size:11.5px;padding:3px 10px;border-radius:20px;font-weight:600;display:inline-block; }
+.status-active { background:#ecfdf5;color:#10b981; }
+.status-inactive { background:#f3f4f6;color:#6b7280; }
+.status-suspended { background:#fef2f2;color:#ef4444; }
+.status-expired { background:#fff7ed;color:#f97316; }
+.detail-label { font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:.06em;color:#9ca3af;margin-bottom:2px; }
+.detail-value { font-size:14px;color:#111827;font-weight:500;margin:0; }
+</style>
+{% endblock %}

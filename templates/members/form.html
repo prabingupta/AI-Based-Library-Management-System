@@ -1,0 +1,127 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}{{ action }} Member{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center gap-2 mb-4" style="font-size:13px;color:#6b7280;">
+    <a href="{% url 'members:list' %}" style="color:#4f46e5;text-decoration:none;">Members</a>
+    <i class="fa-solid fa-chevron-right" style="font-size:10px;"></i>
+    <span>{{ action }} Member</span>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-9">
+        <form method="post">
+            {% csrf_token %}
+
+            <!-- User Info -->
+            <div class="card mb-3">
+                <div class="card-header"><i class="fa-solid fa-user me-2 text-muted"></i>Account Information</div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label-custom">First Name <span class="required">*</span></label>
+                            {{ user_form.first_name }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label-custom">Last Name <span class="required">*</span></label>
+                            {{ user_form.last_name }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label-custom">Email <span class="required">*</span></label>
+                            {{ user_form.email }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label-custom">Username <span class="required">*</span></label>
+                            {{ user_form.username }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label-custom">Phone</label>
+                            {{ user_form.phone }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label-custom">Role</label>
+                            {{ user_form.role }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label-custom">Password {% if action == 'Add' %}<span class="required">*</span>{% endif %}</label>
+                            {{ user_form.password }}
+                            {% if action == 'Update' %}
+                            <p style="font-size:11.5px;color:#9ca3af;margin-top:4px;">Leave blank to keep current password.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Member Info -->
+            <div class="card mb-4">
+                <div class="card-header"><i class="fa-solid fa-id-card me-2 text-muted"></i>Membership Information</div>
+                <div class="card-body">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label-custom">Card Number <span class="required">*</span></label>
+                            {{ member_form.card_number }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label-custom">Membership Type</label>
+                            {{ member_form.membership_type }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label-custom">Status</label>
+                            {{ member_form.status }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label-custom">Max Books Allowed</label>
+                            {{ member_form.max_books_allowed }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label-custom">Membership Start</label>
+                            {{ member_form.membership_start }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label-custom">Membership End</label>
+                            {{ member_form.membership_end }}
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label-custom">Address</label>
+                            {{ member_form.address }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label-custom">Emergency Contact</label>
+                            {{ member_form.emergency_contact }}
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label-custom">Notes</label>
+                            {{ member_form.notes }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {% if user_form.errors or member_form.errors %}
+            <div class="alert" style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;color:#dc2626;font-size:13px;padding:12px 16px;margin-bottom:20px;">
+                <i class="fa-solid fa-circle-exclamation me-2"></i>Please fix the errors below.
+            </div>
+            {% endif %}
+
+            <div class="d-flex gap-3">
+                <button type="submit" class="btn-submit">
+                    <i class="fa-solid fa-check me-2"></i>{{ action }} Member
+                </button>
+                <a href="{% url 'members:list' %}" class="btn-cancel">Cancel</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+.form-label-custom { font-size:13px;font-weight:600;color:#374151;margin-bottom:5px;display:block; }
+.required { color:#ef4444; }
+.btn-submit { background:#4f46e5;color:white;border:none;border-radius:8px;padding:10px 24px;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center; }
+.btn-submit:hover { background:#3730a3; }
+.btn-cancel { background:#f3f4f6;color:#6b7280;border:none;border-radius:8px;padding:10px 20px;font-size:14px;font-weight:500;text-decoration:none;display:inline-flex;align-items:center;transition:all .2s; }
+.btn-cancel:hover { background:#e5e7eb;color:#374151; }
+</style>
+{% endblock %}
