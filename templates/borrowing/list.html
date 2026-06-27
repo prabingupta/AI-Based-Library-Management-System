@@ -1,0 +1,144 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Borrowing{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+        <h2 style="font-size:22px;font-weight:700;color:#111827;margin-bottom:2px;">Borrowing</h2>
+        <p style="color:#6b7280;font-size:13.5px;margin:0;">{{ total_count }} record{{ total_count|pluralize }}</p>
+    </div>
+    <a href="{% url 'borrowing:issue' %}" class="btn-add">
+        <i class="fa-solid fa-plus"></i> Issue Book
+    </a>
+</div>
+
+<!-- Filters -->
+<div class="card mb-4">
+    <div class="card-body py-3">
+        <form method="get" class="row g-2 align-items-end">
+            <div class="col-md-6">
+                <div class="search-input-wrap">
+                    <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                    <input type="text" name="q" value="{{ query }}" class="form-control search-input" placeholder="Search member, book, barcode...">
+                </div>
+            </div>
+            <div class="col-md-3">
+                <select name="status" class="form-select" style="font-size:13.5px;">
+                    <option value="">All Status</option>
+                    <option value="borrowed" {% if selected_status == 'borrowed' %}selected{% endif %}>Borrowed</option>
+                    <option value="returned" {% if selected_status == 'returned' %}selected{% endif %}>Returned</option>
+                    <option value="renewed" {% if selected_status == 'renewed' %}selected{% endif %}>Renewed</option>
+                    <option value="lost" {% if selected_status == 'lost' %}selected{% endif %}>Lost</option>
+                </select>
+            </div>
+            <div class="col-md-3 d-flex gap-2">
+                <button type="submit" class="btn-filter">Filter</button>
+                <a href="{% url 'borrowing:list' %}" class="btn-clear">Clear</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Records Table -->
+<div class="card">
+    <div class="card-body p-0">
+        {% if records %}
+        <div class="table-responsive">
+            <table class="table table-hover mb-0" style="font-size:13.5px;">
+                <thead style="background:#f9fafb;">
+                    <tr>
+                        <th class="px-4 py-3" style="font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:#6b7280;font-weight:600;">Member</th>
+                        <th class="py-3" style="font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:#6b7280;font-weight:600;">Book</th>
+                        <th class="py-3" style="font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:#6b7280;font-weight:600;">Issued</th>
+                        <th class="py-3" style="font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:#6b7280;font-weight:600;">Due Date</th>
+                        <th class="py-3" style="font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:#6b7280;font-weight:600;">Status</th>
+                        <th class="py-3" style="font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:#6b7280;font-weight:600;">Fine</th>
+                        <th class="py-3"></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for record in records %}
+                    <tr {% if record.pk in overdue_ids %}style="background:#fffbeb;"{% endif %}>
+                        <td class="px-4 py-3">
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="member-avatar">
+                                    {{ record.member.user.first_name|first }}{{ record.member.user.last_name|first }}
+                                </div>
+                                <div>
+                                    <p style="margin:0;font-weight:600;color:#111827;">{{ record.member.user.get_full_name }}</p>
+                                    <p style="margin:0;color:#9ca3af;font-size:12px;">{{ record.member.card_number }}</p>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="py-3" style="max-width:180px;">
+                            <p style="margin:0;font-weight:500;color:#111827;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">{{ record.book_copy.book.title|truncatechars:30 }}</p>
+                            <p style="margin:0;font-size:11px;color:#9ca3af;">{{ record.book_copy.barcode }}</p>
+                        </td>
+                        <td class="py-3" style="color:#6b7280;">{{ record.borrow_date|date:"M d, Y" }}</td>
+                        <td class="py-3">
+                            {% if record.pk in overdue_ids %}
+                                <span style="color:#ef4444;font-weight:600;">{{ record.due_date|date:"M d, Y" }}</span>
+                                <span style="font-size:11px;color:#ef4444;display:block;">{{ record.days_overdue }}d overdue</span>
+                            {% else %}
+                                <span style="color:#374151;">{{ record.due_date|date:"M d, Y" }}</span>
+                            {% endif %}
+                        </td>
+                        <td class="py-3">
+                            {% if record.pk in overdue_ids %}
+                                <span class="status-chip" style="background:#fef2f2;color:#ef4444;">Overdue</span>
+                            {% elif record.status == 'borrowed' %}
+                                <span class="status-chip" style="background:#fffbeb;color:#f59e0b;">Borrowed</span>
+                            {% elif record.status == 'returned' %}
+                                <span class="status-chip" style="background:#ecfdf5;color:#10b981;">Returned</span>
+                            {% elif record.status == 'renewed' %}
+                                <span class="status-chip" style="background:#eef2ff;color:#4f46e5;">Renewed</span>
+                            {% else %}
+                                <span class="status-chip" style="background:#f3f4f6;color:#6b7280;">{{ record.get_status_display }}</span>
+                            {% endif %}
+                        </td>
+                        <td class="py-3">
+                            {% if record.fine_amount > 0 %}
+                                <span style="color:#ef4444;font-weight:600;">Rs. {{ record.fine_amount }}</span>
+                            {% else %}
+                                <span style="color:#9ca3af;">-</span>
+                            {% endif %}
+                        </td>
+                        <td class="py-3 pe-4">
+                            <a href="{% url 'borrowing:detail' record.pk %}" class="action-btn" title="View">
+                                <i class="fa-solid fa-eye"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="text-center py-5" style="color:#9ca3af;">
+            <i class="fa-solid fa-arrow-right-arrow-left" style="font-size:40px;margin-bottom:12px;display:block;"></i>
+            <p style="font-size:15px;font-weight:600;color:#6b7280;margin-bottom:6px;">No borrow records found</p>
+            <p style="font-size:13.5px;margin-bottom:20px;">Issue a book to get started.</p>
+            <a href="{% url 'borrowing:issue' %}" class="btn-add"><i class="fa-solid fa-plus"></i> Issue Book</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+.btn-add { display:inline-flex;align-items:center;gap:7px;background:#4f46e5;color:white;padding:9px 18px;border-radius:8px;font-size:13.5px;font-weight:600;text-decoration:none;transition:all .2s;border:none;cursor:pointer; }
+.btn-add:hover { background:#3730a3;color:white; }
+.btn-filter { background:#4f46e5;color:white;border:none;border-radius:8px;padding:8px 16px;font-size:13.5px;font-weight:600;cursor:pointer;transition:all .2s; }
+.btn-filter:hover { background:#3730a3; }
+.btn-clear { background:#f3f4f6;color:#6b7280;border:none;border-radius:8px;padding:8px 16px;font-size:13.5px;font-weight:500;text-decoration:none;display:inline-flex;align-items:center;transition:all .2s; }
+.btn-clear:hover { background:#e5e7eb;color:#374151; }
+.search-input-wrap { position:relative; }
+.search-icon { position:absolute;left:12px;top:50%;transform:translateY(-50%);color:#9ca3af;font-size:13px; }
+.search-input { padding-left:36px;font-size:13.5px; }
+.member-avatar { width:32px;height:32px;border-radius:50%;background:#eef2ff;color:#4f46e5;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0; }
+.status-chip { font-size:11.5px;padding:3px 10px;border-radius:20px;font-weight:600;display:inline-block; }
+.action-btn { width:30px;height:30px;border-radius:6px;background:#f3f4f6;color:#6b7280;display:inline-flex;align-items:center;justify-content:center;text-decoration:none;font-size:12px;transition:all .2s; }
+.action-btn:hover { background:#eef2ff;color:#4f46e5; }
+</style>
+{% endblock %}

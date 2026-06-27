@@ -1,0 +1,178 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Borrow Record{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center gap-2 mb-4" style="font-size:13px;color:#6b7280;">
+    <a href="{% url 'borrowing:list' %}" style="color:#4f46e5;text-decoration:none;">Borrowing</a>
+    <i class="fa-solid fa-chevron-right" style="font-size:10px;"></i>
+    <span>Record #{{ record.pk|stringformat:"s"|slice:":8" }}</span>
+</div>
+
+<div class="row g-4">
+    <!-- Left: Info -->
+    <div class="col-md-4">
+        <div class="card mb-3">
+            <div class="card-body p-4">
+                <div class="text-center mb-4">
+                    {% if record.status == 'returned' %}
+                        <div style="width:56px;height:56px;border-radius:50%;background:#ecfdf5;color:#10b981;font-size:22px;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;">
+                            <i class="fa-solid fa-check"></i>
+                        </div>
+                        <span class="status-chip" style="background:#ecfdf5;color:#10b981;">Returned</span>
+                    {% elif record.is_overdue %}
+                        <div style="width:56px;height:56px;border-radius:50%;background:#fef2f2;color:#ef4444;font-size:22px;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;">
+                            <i class="fa-solid fa-clock"></i>
+                        </div>
+                        <span class="status-chip" style="background:#fef2f2;color:#ef4444;">Overdue</span>
+                    {% else %}
+                        <div style="width:56px;height:56px;border-radius:50%;background:#fffbeb;color:#f59e0b;font-size:22px;display:flex;align-items:center;justify-content:center;margin:0 auto 12px;">
+                            <i class="fa-solid fa-arrow-right-arrow-left"></i>
+                        </div>
+                        <span class="status-chip" style="background:#fffbeb;color:#f59e0b;">{{ record.get_status_display }}</span>
+                    {% endif %}
+                </div>
+
+                <div style="font-size:13px;">
+                    <div class="info-row">
+                        <span class="info-label">Member</span>
+                        <a href="{% url 'members:detail' record.member.pk %}" style="color:#4f46e5;font-weight:600;text-decoration:none;">{{ record.member.user.get_full_name }}</a>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Card No.</span>
+                        <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;font-size:11px;">{{ record.member.card_number }}</code>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Issued By</span>
+                        <strong>{{ record.issued_by.get_full_name|default:"-" }}</strong>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Issued On</span>
+                        <strong>{{ record.borrow_date|date:"M d, Y" }}</strong>
+                    </div>
+                    <div class="info-row">
+                        <span class="info-label">Due Date</span>
+                        <strong {% if record.is_overdue %}style="color:#ef4444;"{% endif %}>{{ record.due_date|date:"M d, Y" }}</strong>
+                    </div>
+                    {% if record.return_date %}
+                    <div class="info-row">
+                        <span class="info-label">Returned On</span>
+                        <strong>{{ record.return_date|date:"M d, Y" }}</strong>
+                    </div>
+                    {% endif %}
+                    <div class="info-row">
+                        <span class="info-label">Renewals</span>
+                        <strong>{{ record.renew_count }}/2</strong>
+                    </div>
+                    <div class="info-row" style="border:none;">
+                        <span class="info-label">Fine</span>
+                        {% if record.fine_amount > 0 %}
+                            <strong style="color:#ef4444;">Rs. {{ record.fine_amount }}</strong>
+                        {% else %}
+                            <strong style="color:#10b981;">None</strong>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {% if record.status == 'borrowed' or record.status == 'renewed' %}
+        <!-- Return Form -->
+        <div class="card mb-3">
+            <div class="card-header"><i class="fa-solid fa-rotate-left me-2 text-muted"></i>Return Book</div>
+            <div class="card-body">
+                <form method="post" action="{% url 'borrowing:return' record.pk %}">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label-custom">Fine Amount (Rs.)</label>
+                        {{ return_form.fine_amount }}
+                        {% if record.is_overdue %}
+                        <p style="font-size:11.5px;color:#ef4444;margin-top:4px;">
+                            <i class="fa-solid fa-triangle-exclamation me-1"></i>{{ record.days_overdue }} day(s) overdue
+                        </p>
+                        {% endif %}
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label-custom">Notes</label>
+                        {{ return_form.notes }}
+                    </div>
+                    <button type="submit" class="btn-return w-100">
+                        <i class="fa-solid fa-rotate-left me-2"></i>Confirm Return
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Renew -->
+        {% if record.renew_count < 2 %}
+        <form method="post" action="{% url 'borrowing:renew' record.pk %}">
+            {% csrf_token %}
+            <button type="submit" class="btn-renew w-100" onclick="return confirm('Renew this book for 14 more days?')">
+                <i class="fa-solid fa-rotate-right me-2"></i>Renew (+14 days)
+            </button>
+        </form>
+        {% endif %}
+        {% endif %}
+    </div>
+
+    <!-- Right: Book Info -->
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header"><i class="fa-solid fa-book me-2 text-muted"></i>Book Details</div>
+            <div class="card-body">
+                <div class="d-flex gap-4">
+                    <div style="width:100px;height:140px;border-radius:8px;overflow:hidden;background:#f3f4f6;flex-shrink:0;">
+                        {% if record.book_copy.book.cover_image %}
+                            <img src="{{ record.book_copy.book.cover_image.url }}" style="width:100%;height:100%;object-fit:cover;">
+                        {% else %}
+                            <div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#eef2ff,#e0e7ff);color:#a5b4fc;font-size:32px;">
+                                <i class="fa-solid fa-book"></i>
+                            </div>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <h2 style="font-size:18px;font-weight:700;color:#111827;margin-bottom:6px;">{{ record.book_copy.book.title }}</h2>
+                        <p style="font-size:13px;color:#6b7280;margin-bottom:4px;">
+                            {% for author in record.book_copy.book.authors.all %}
+                                {{ author.full_name }}{% if not forloop.last %}, {% endif %}
+                            {% empty %}Unknown Author{% endfor %}
+                        </p>
+                        <p style="font-size:13px;color:#9ca3af;margin-bottom:12px;">
+                            {% if record.book_copy.book.publisher %}{{ record.book_copy.book.publisher.name }}{% endif %}
+                            {% if record.book_copy.book.publication_year %} &bull; {{ record.book_copy.book.publication_year }}{% endif %}
+                        </p>
+                        <div style="font-size:13px;">
+                            <span style="background:#f3f4f6;color:#374151;padding:4px 12px;border-radius:6px;margin-right:8px;">
+                                <i class="fa-solid fa-barcode me-1 text-muted"></i>{{ record.book_copy.barcode }}
+                            </span>
+                            {% if record.book_copy.book.isbn %}
+                            <span style="background:#f3f4f6;color:#374151;padding:4px 12px;border-radius:6px;">
+                                ISBN: {{ record.book_copy.book.isbn }}
+                            </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                {% if record.notes %}
+                <div style="margin-top:20px;padding:12px 16px;background:#f9fafb;border-radius:8px;font-size:13px;color:#6b7280;">
+                    <strong style="color:#374151;">Notes:</strong> {{ record.notes }}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.status-chip { font-size:12px;padding:4px 14px;border-radius:20px;font-weight:600;display:inline-block; }
+.info-row { display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #f3f4f6; }
+.info-label { color:#6b7280; }
+.form-label-custom { font-size:13px;font-weight:600;color:#374151;margin-bottom:5px;display:block; }
+.btn-return { background:#10b981;color:white;border:none;border-radius:8px;padding:10px;font-size:13.5px;font-weight:600;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center; }
+.btn-return:hover { background:#059669; }
+.btn-renew { background:#f3f4f6;color:#374151;border:1px solid #e5e7eb;border-radius:8px;padding:10px;font-size:13.5px;font-weight:600;cursor:pointer;transition:all .2s;display:flex;align-items:center;justify-content:center;margin-top:8px; }
+.btn-renew:hover { background:#e5e7eb; }
+</style>
+{% endblock %}
