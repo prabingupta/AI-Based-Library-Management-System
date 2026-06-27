@@ -7,14 +7,30 @@
     </div>
 
     <div class="navbar-right">
-        <button class="icon-btn" title="Search (coming soon)">
-            <i class="fa-solid fa-magnifying-glass"></i>
-        </button>
+        <!-- Search -->
+        <form method="get" action="{% url 'books:search' %}" class="d-none d-md-flex" style="position:relative;">
+            <div style="position:relative;">
+                <i class="fa-solid fa-magnifying-glass" style="position:absolute;left:10px;top:50%;transform:translateY(-50%);color:var(--text-muted);font-size:12px;pointer-events:none;"></i>
+                <input
+                    type="text"
+                    name="q"
+                    placeholder="Search..."
+                    class="form-control"
+                    style="padding-left:30px;font-size:13px;height:34px;width:200px;border-radius:8px;border:1px solid var(--border);background:var(--border-light);color:var(--text-primary);"
+                >
+            </div>
+        </form>
 
+        <a href="{% url 'books:search' %}" class="icon-btn d-md-none" title="Search">
+            <i class="fa-solid fa-magnifying-glass"></i>
+        </a>
+
+        <!-- Dark Mode -->
         <button class="theme-toggle" id="themeToggle" title="Toggle dark mode">
             <i class="fa-solid fa-moon" id="themeIcon"></i>
         </button>
 
+        <!-- Notifications -->
         <div class="dropdown">
             <button class="icon-btn position-relative" data-bs-toggle="dropdown" title="Notifications">
                 <i class="fa-solid fa-bell"></i>
@@ -31,6 +47,7 @@
             </div>
         </div>
 
+        <!-- User Menu -->
         <div class="dropdown">
             <button class="user-menu-btn" data-bs-toggle="dropdown">
                 <div class="nav-avatar">
@@ -50,8 +67,8 @@
                     </a>
                 </li>
                 <li>
-                    <a class="dropdown-item" href="#">
-                        <i class="fa-solid fa-gear me-2" style="color:var(--text-muted);width:16px;"></i>Settings
+                    <a class="dropdown-item" href="{% url 'books:categories' %}">
+                        <i class="fa-solid fa-folder me-2" style="color:var(--text-muted);width:16px;"></i>Categories
                     </a>
                 </li>
                 <li><hr class="dropdown-divider"></li>

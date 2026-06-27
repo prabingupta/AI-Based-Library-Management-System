@@ -67,8 +67,7 @@ class BookCreateView(View):
 
     def get(self, request):
         form = BookForm()
-        context = {'form': form, 'page_title': 'Add Book', 'action': 'Add'}
-        return render(request, self.template_name, context)
+        return render(request, self.template_name, {'form': form, 'page_title': 'Add Book', 'action': 'Add'})
 
     def post(self, request):
         form = BookForm(request.POST, request.FILES)
@@ -79,8 +78,7 @@ class BookCreateView(View):
             form.save_m2m()
             messages.success(request, f'"{book.title}" has been added successfully.')
             return redirect('books:detail', pk=book.pk)
-        context = {'form': form, 'page_title': 'Add Book', 'action': 'Add'}
-        return render(request, self.template_name, context)
+        return render(request, self.template_name, {'form': form, 'page_title': 'Add Book', 'action': 'Add'})
 
 
 @method_decorator(login_required, name='dispatch')
@@ -90,8 +88,7 @@ class BookEditView(View):
     def get(self, request, pk):
         book = get_object_or_404(Book, pk=pk, is_deleted=False)
         form = BookForm(instance=book)
-        context = {'form': form, 'book': book, 'page_title': 'Edit Book', 'action': 'Update'}
-        return render(request, self.template_name, context)
+        return render(request, self.template_name, {'form': form, 'book': book, 'page_title': 'Edit Book', 'action': 'Update'})
 
     def post(self, request, pk):
         book = get_object_or_404(Book, pk=pk, is_deleted=False)
@@ -100,8 +97,7 @@ class BookEditView(View):
             book = form.save()
             messages.success(request, f'"{book.title}" has been updated.')
             return redirect('books:detail', pk=book.pk)
-        context = {'form': form, 'book': book, 'page_title': 'Edit Book', 'action': 'Update'}
-        return render(request, self.template_name, context)
+        return render(request, self.template_name, {'form': form, 'book': book, 'page_title': 'Edit Book', 'action': 'Update'})
 
 
 @method_decorator(login_required, name='dispatch')
@@ -112,3 +108,72 @@ class BookDeleteView(View):
         book.save()
         messages.success(request, f'"{book.title}" has been deleted.')
         return redirect('books:list')
+
+
+@method_decorator(login_required, name='dispatch')
+class CategoryListView(View):
+    template_name = 'books/categories.html'
+
+    def get(self, request):
+        categories = Category.objects.filter(is_active=True, is_deleted=False)
+        cats_with_counts = []
+        for cat in categories:
+            count = cat.books.filter(is_deleted=False).count()
+            cats_with_counts.append({'category': cat, 'count': count})
+
+        context = {
+            'cats_with_counts': cats_with_counts,
+            'page_title': 'Categories',
+        }
+        return render(request, self.template_name, context)
+
+
+@method_decorator(login_required, name='dispatch')
+class GlobalSearchView(View):
+    template_name = 'books/search_results.html'
+
+    def get(self, request):
+        query = request.GET.get('q', '').strip()
+        books = []
+        members = []
+        borrow_records = []
+
+        if query:
+            from members.models import Member
+            from borrowing.models import BorrowRecord
+
+            books = Book.objects.filter(
+                is_deleted=False
+            ).filter(
+                Q(title__icontains=query) |
+                Q(isbn__icontains=query) |
+                Q(description__icontains=query) |
+                Q(authors__first_name__icontains=query) |
+                Q(authors__last_name__icontains=query) |
+                Q(categories__name__icontains=query)
+            ).distinct()[:10]
+
+            members = Member.objects.filter(
+                is_deleted=False
+            ).filter(
+                Q(card_number__icontains=query) |
+                Q(user__first_name__icontains=query) |
+                Q(user__last_name__icontains=query) |
+                Q(user__email__icontains=query)
+            ).distinct()[:5]
+
+            borrow_records = BorrowRecord.objects.filter(
+                Q(book_copy__book__title__icontains=query) |
+                Q(member__user__first_name__icontains=query) |
+                Q(book_copy__barcode__icontains=query)
+            ).select_related('member__user', 'book_copy__book').distinct()[:5]
+
+        context = {
+            'query': query,
+            'books': books,
+            'members': members,
+            'borrow_records': borrow_records,
+            'total_results': len(list(books)) + len(list(members)) + len(list(borrow_records)),
+            'page_title': f'Search: {query}',
+        }
+        return render(request, self.template_name, context)

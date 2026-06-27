@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Categories{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center justify-content-between mb-4">
+    <div>
+        <h2 style="font-size:22px;font-weight:700;color:var(--text-primary);margin-bottom:2px;">Categories</h2>
+        <p style="color:var(--text-secondary);font-size:13.5px;margin:0;">{{ cats_with_counts|length }} categor{{ cats_with_counts|length|pluralize:"y,ies" }}</p>
+    </div>
+    <a href="{% url 'books:list' %}" class="btn-outline-nav">
+        <i class="fa-solid fa-arrow-left me-2"></i>Back to Books
+    </a>
+</div>
+
+<div class="row g-3">
+    {% for item in cats_with_counts %}
+    <div class="col-6 col-md-4 col-lg-3">
+        <a href="{% url 'books:list' %}?category={{ item.category.slug }}" class="cat-card-link">
+            <div class="cat-card">
+                <div class="cat-icon">
+                    {% if item.category.icon %}
+                        <i class="{{ item.category.icon }}"></i>
+                    {% else %}
+                        <i class="fa-solid fa-folder"></i>
+                    {% endif %}
+                </div>
+                <p class="cat-name">{{ item.category.name }}</p>
+                <p class="cat-count">{{ item.count }} book{{ item.count|pluralize }}</p>
+            </div>
+        </a>
+    </div>
+    {% empty %}
+    <div class="col-12">
+        <div class="text-center py-5" style="color:var(--text-muted);">
+            <i class="fa-solid fa-folder-open" style="font-size:40px;margin-bottom:12px;display:block;"></i>
+            <p style="font-size:15px;font-weight:600;color:var(--text-secondary);margin-bottom:6px;">No categories yet</p>
+            <p style="font-size:13.5px;">Add categories from the admin panel.</p>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<style>
+.btn-outline-nav { display:inline-flex;align-items:center;background:transparent;border:1px solid var(--border);border-radius:8px;padding:8px 16px;font-size:13.5px;font-weight:500;color:var(--text-secondary);text-decoration:none;transition:all .2s; }
+.btn-outline-nav:hover { background:var(--border-light);color:var(--text-primary); }
+.cat-card-link { text-decoration:none;display:block; }
+.cat-card { background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:24px 20px;text-align:center;transition:all .2s;cursor:pointer; }
+.cat-card:hover { box-shadow:var(--shadow-md);transform:translateY(-2px);border-color:var(--primary); }
+.cat-icon { width:52px;height:52px;border-radius:12px;background:var(--primary-light);color:var(--primary);font-size:20px;display:flex;align-items:center;justify-content:center;margin:0 auto 14px; }
+.cat-name { font-size:14px;font-weight:700;color:var(--text-primary);margin-bottom:4px; }
+.cat-count { font-size:12px;color:var(--text-muted);margin:0;font-weight:500; }
+</style>
+{% endblock %}
