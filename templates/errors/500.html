@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>500 - Server Error | LibraryOS</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * { box-sizing:border-box; margin:0; padding:0; }
+        body { font-family:'Inter',sans-serif; background:#f9fafb; min-height:100vh; display:flex; align-items:center; justify-content:center; }
+        .error-wrap { text-align:center; padding:40px 20px; }
+        .error-code { font-size:120px; font-weight:800; color:#e5e7eb; line-height:1; margin-bottom:8px; }
+        .error-icon { font-size:48px; color:#ef4444; margin-bottom:20px; }
+        .error-title { font-size:24px; font-weight:700; color:#111827; margin-bottom:8px; }
+        .error-msg { font-size:15px; color:#6b7280; margin-bottom:28px; }
+        .btn-home { display:inline-flex; align-items:center; gap:8px; background:#4f46e5; color:white; padding:11px 24px; border-radius:8px; font-size:14px; font-weight:600; text-decoration:none; }
+        .btn-home:hover { background:#3730a3; color:white; }
+    </style>
+</head>
+<body>
+<div class="error-wrap">
+    <div class="error-code">500</div>
+    <div class="error-icon"><i class="fa-solid fa-server"></i></div>
+    <h1 class="error-title">Internal Server Error</h1>
+    <p class="error-msg">Something went wrong on our end. We're working to fix it.</p>
+    <a href="/dashboard/" class="btn-home"><i class="fa-solid fa-house"></i> Go to Dashboard</a>
+</div>
+</body>
+</html>
