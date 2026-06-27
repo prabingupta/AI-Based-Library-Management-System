@@ -5,15 +5,15 @@
 
 {% block content %}
 <div class="mb-4">
-    <h2 style="font-size:22px; font-weight:700; color:#111827; margin-bottom:4px;">Good day, {{ request.user.first_name }} 👋</h2>
-    <p style="color:#6b7280; font-size:14px; margin:0;">Here's what's happening in your library today.</p>
+    <h2 style="font-size:22px;font-weight:700;color:#111827;margin-bottom:4px;">Good day, {{ request.user.first_name }} 👋</h2>
+    <p style="color:#6b7280;font-size:14px;margin:0;">Here's what's happening in your library today.</p>
 </div>
 
-<!-- Stat Cards -->
+<!-- Stat Cards Row 1 -->
 <div class="row g-3 mb-4">
     <div class="col-6 col-md-3">
         <div class="stat-card">
-            <div class="stat-icon" style="background:#eef2ff; color:#4f46e5;">
+            <div class="stat-icon" style="background:#eef2ff;color:#4f46e5;">
                 <i class="fa-solid fa-books"></i>
             </div>
             <div class="stat-value">{{ total_books }}</div>
@@ -22,7 +22,7 @@
     </div>
     <div class="col-6 col-md-3">
         <div class="stat-card">
-            <div class="stat-icon" style="background:#ecfdf5; color:#10b981;">
+            <div class="stat-icon" style="background:#ecfdf5;color:#10b981;">
                 <i class="fa-solid fa-users"></i>
             </div>
             <div class="stat-value">{{ total_members }}</div>
@@ -31,7 +31,7 @@
     </div>
     <div class="col-6 col-md-3">
         <div class="stat-card">
-            <div class="stat-icon" style="background:#fffbeb; color:#f59e0b;">
+            <div class="stat-icon" style="background:#fffbeb;color:#f59e0b;">
                 <i class="fa-solid fa-arrow-right-arrow-left"></i>
             </div>
             <div class="stat-value">{{ active_borrows }}</div>
@@ -40,7 +40,7 @@
     </div>
     <div class="col-6 col-md-3">
         <div class="stat-card">
-            <div class="stat-icon" style="background:#fef2f2; color:#ef4444;">
+            <div class="stat-icon" style="background:#fef2f2;color:#ef4444;">
                 <i class="fa-solid fa-clock-rotate-left"></i>
             </div>
             <div class="stat-value">{{ overdue_count }}</div>
@@ -49,11 +49,11 @@
     </div>
 </div>
 
-<!-- Second Row -->
+<!-- Stat Cards Row 2 -->
 <div class="row g-3 mb-4">
     <div class="col-6 col-md-3">
         <div class="stat-card">
-            <div class="stat-icon" style="background:#f0fdf4; color:#16a34a;">
+            <div class="stat-icon" style="background:#f0fdf4;color:#16a34a;">
                 <i class="fa-solid fa-copy"></i>
             </div>
             <div class="stat-value">{{ available_copies }}</div>
@@ -62,7 +62,7 @@
     </div>
     <div class="col-6 col-md-3">
         <div class="stat-card">
-            <div class="stat-icon" style="background:#faf5ff; color:#9333ea;">
+            <div class="stat-icon" style="background:#faf5ff;color:#9333ea;">
                 <i class="fa-solid fa-layer-group"></i>
             </div>
             <div class="stat-value">{{ total_copies }}</div>
@@ -71,11 +71,35 @@
     </div>
 </div>
 
-<!-- Recent Borrows Table -->
+<!-- Charts Row -->
+<div class="row g-3 mb-4">
+    <div class="col-md-8">
+        <div class="card h-100">
+            <div class="card-header">
+                <i class="fa-solid fa-chart-line me-2 text-muted"></i>Borrowing Activity (Last 7 Days)
+            </div>
+            <div class="card-body">
+                <canvas id="trendChart" height="100"></canvas>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100">
+            <div class="card-header">
+                <i class="fa-solid fa-chart-pie me-2 text-muted"></i>Books by Category
+            </div>
+            <div class="card-body d-flex align-items-center justify-content-center">
+                <canvas id="catChart" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Borrows -->
 <div class="card">
     <div class="card-header d-flex justify-content-between align-items-center">
         <span><i class="fa-solid fa-clock-rotate-left me-2 text-muted"></i>Recent Borrowing Activity</span>
-        <a href="/borrowing/" style="font-size:13px; color:#4f46e5; text-decoration:none; font-weight:500;">View all</a>
+        <a href="/borrowing/" style="font-size:13px;color:#4f46e5;text-decoration:none;font-weight:500;">View all</a>
     </div>
     <div class="card-body p-0">
         {% if recent_borrows %}
@@ -83,11 +107,11 @@
             <table class="table table-hover mb-0" style="font-size:13.5px;">
                 <thead style="background:#f9fafb;">
                     <tr>
-                        <th class="px-4 py-3 text-muted fw-600" style="font-size:12px; text-transform:uppercase; letter-spacing:.04em;">Member</th>
-                        <th class="py-3 text-muted fw-600" style="font-size:12px; text-transform:uppercase; letter-spacing:.04em;">Book</th>
-                        <th class="py-3 text-muted fw-600" style="font-size:12px; text-transform:uppercase; letter-spacing:.04em;">Borrow Date</th>
-                        <th class="py-3 text-muted fw-600" style="font-size:12px; text-transform:uppercase; letter-spacing:.04em;">Due Date</th>
-                        <th class="py-3 text-muted fw-600" style="font-size:12px; text-transform:uppercase; letter-spacing:.04em;">Status</th>
+                        <th class="px-4 py-3" style="font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:#6b7280;font-weight:600;">Member</th>
+                        <th class="py-3" style="font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:#6b7280;font-weight:600;">Book</th>
+                        <th class="py-3" style="font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:#6b7280;font-weight:600;">Borrow Date</th>
+                        <th class="py-3" style="font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:#6b7280;font-weight:600;">Due Date</th>
+                        <th class="py-3" style="font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:#6b7280;font-weight:600;">Status</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -104,24 +128,22 @@
                                 </div>
                             </div>
                         </td>
-                        <td class="py-3" style="color:#374151; max-width:200px;">
-                            <span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;">
-                                {{ record.book_copy.book.title }}
-                            </span>
+                        <td class="py-3" style="color:#374151;max-width:200px;">
+                            <span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block;">{{ record.book_copy.book.title }}</span>
                         </td>
                         <td class="py-3" style="color:#6b7280;">{{ record.borrow_date|date:"M d, Y" }}</td>
                         <td class="py-3" style="color:#6b7280;">{{ record.due_date|date:"M d, Y" }}</td>
                         <td class="py-3">
                             {% if record.status == 'borrowed' %}
                                 {% if record.is_overdue %}
-                                <span class="badge" style="background:#fef2f2;color:#ef4444;font-size:11px;padding:4px 10px;border-radius:20px;font-weight:600;">Overdue</span>
+                                <span style="background:#fef2f2;color:#ef4444;font-size:11px;padding:4px 10px;border-radius:20px;font-weight:600;display:inline-block;">Overdue</span>
                                 {% else %}
-                                <span class="badge" style="background:#fffbeb;color:#f59e0b;font-size:11px;padding:4px 10px;border-radius:20px;font-weight:600;">Borrowed</span>
+                                <span style="background:#fffbeb;color:#f59e0b;font-size:11px;padding:4px 10px;border-radius:20px;font-weight:600;display:inline-block;">Borrowed</span>
                                 {% endif %}
                             {% elif record.status == 'returned' %}
-                                <span class="badge" style="background:#ecfdf5;color:#10b981;font-size:11px;padding:4px 10px;border-radius:20px;font-weight:600;">Returned</span>
+                                <span style="background:#ecfdf5;color:#10b981;font-size:11px;padding:4px 10px;border-radius:20px;font-weight:600;display:inline-block;">Returned</span>
                             {% else %}
-                                <span class="badge" style="background:#f3f4f6;color:#6b7280;font-size:11px;padding:4px 10px;border-radius:20px;font-weight:600;">{{ record.get_status_display }}</span>
+                                <span style="background:#f3f4f6;color:#6b7280;font-size:11px;padding:4px 10px;border-radius:20px;font-weight:600;display:inline-block;">{{ record.get_status_display }}</span>
                             {% endif %}
                         </td>
                     </tr>
@@ -137,4 +159,81 @@
         {% endif %}
     </div>
 </div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const trendLabels = {{ trend_labels|safe }};
+const trendData = {{ trend_data|safe }};
+const catLabels = {{ cat_labels|safe }};
+const catData = {{ cat_data|safe }};
+
+// Trend Chart
+const trendCtx = document.getElementById('trendChart').getContext('2d');
+new Chart(trendCtx, {
+    type: 'line',
+    data: {
+        labels: trendLabels,
+        datasets: [{
+            label: 'Books Borrowed',
+            data: trendData,
+            borderColor: '#4f46e5',
+            backgroundColor: 'rgba(79,70,229,0.08)',
+            borderWidth: 2.5,
+            pointBackgroundColor: '#4f46e5',
+            pointRadius: 4,
+            tension: 0.4,
+            fill: true,
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: { display: false }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: { stepSize: 1, font: { size: 12 } },
+                grid: { color: '#f3f4f6' }
+            },
+            x: {
+                ticks: { font: { size: 12 } },
+                grid: { display: false }
+            }
+        }
+    }
+});
+
+// Category Doughnut Chart
+if (catData.length > 0) {
+    const catCtx = document.getElementById('catChart').getContext('2d');
+    new Chart(catCtx, {
+        type: 'doughnut',
+        data: {
+            labels: catLabels,
+            datasets: [{
+                data: catData,
+                backgroundColor: [
+                    '#4f46e5','#10b981','#f59e0b','#ef4444',
+                    '#9333ea','#06b6d4','#f97316','#84cc16',
+                    '#ec4899','#6b7280'
+                ],
+                borderWidth: 2,
+                borderColor: '#ffffff',
+            }]
+        },
+        options: {
+            responsive: true,
+            cutout: '65%',
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: { font: { size: 11 }, padding: 12 }
+                }
+            }
+        }
+    });
+}
+</script>
 {% endblock %}
