@@ -4,20 +4,48 @@
 {% block title %}{{ action }} Book{% endblock %}
 
 {% block content %}
-<div class="d-flex align-items-center gap-2 mb-4" style="font-size:13px;color:#6b7280;">
-    <a href="{% url 'books:list' %}" style="color:#4f46e5;text-decoration:none;">Books</a>
+<div class="d-flex align-items-center gap-2 mb-4" style="font-size:13px;color:var(--text-muted);">
+    <a href="{% url 'books:list' %}" style="color:var(--primary);text-decoration:none;">Books</a>
     <i class="fa-solid fa-chevron-right" style="font-size:10px;"></i>
     <span>{{ action }} Book</span>
 </div>
 
 <div class="row justify-content-center">
     <div class="col-lg-9">
-        <div class="card">
-            <div class="card-header">
-                <i class="fa-solid fa-book me-2 text-muted"></i>{{ action }} Book
+
+        <!-- ISBN Lookup Card -->
+        {% if action == 'Add' %}
+        <div class="card mb-3" id="isbnLookupCard">
+            <div class="card-header" style="background:linear-gradient(135deg,var(--primary-light),var(--border-light));">
+                <i class="fa-solid fa-wand-magic-sparkles me-2" style="color:var(--primary);"></i>
+                <span style="font-weight:700;color:var(--primary);">Auto-fill from ISBN</span>
+                <span style="font-size:12px;color:var(--text-muted);margin-left:8px;">Powered by Open Library API</span>
             </div>
             <div class="card-body">
-                <form method="post" enctype="multipart/form-data">
+                <div class="d-flex gap-2">
+                    <input
+                        type="text"
+                        id="isbnLookupInput"
+                        class="form-control"
+                        placeholder="Enter ISBN-10 or ISBN-13 (e.g. 9780062316097)"
+                        style="font-size:14px;"
+                        maxlength="20"
+                    >
+                    <button type="button" id="isbnLookupBtn" onclick="lookupISBN()" class="btn-lookup">
+                        <i class="fa-solid fa-magnifying-glass me-2"></i>Lookup
+                    </button>
+                </div>
+                <div id="lookupStatus" style="margin-top:10px;font-size:13px;display:none;"></div>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="card">
+            <div class="card-header">
+                <i class="fa-solid fa-book me-2" style="color:var(--text-muted);"></i>{{ action }} Book
+            </div>
+            <div class="card-body">
+                <form method="post" enctype="multipart/form-data" id="bookForm">
                     {% csrf_token %}
 
                     <div class="form-section">
@@ -42,6 +70,10 @@
                             <div class="col-md-6">
                                 <label class="form-label-custom">Cover Image</label>
                                 {{ form.cover_image }}
+                                <div id="coverPreview" style="margin-top:8px;display:none;">
+                                    <img id="coverImg" src="" style="height:80px;border-radius:6px;border:1px solid var(--border);">
+                                    <p style="font-size:11px;color:var(--text-muted);margin-top:4px;">Cover from Open Library</p>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -125,9 +157,8 @@
                     </div>
 
                     {% if form.errors %}
-                    <div class="alert" style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;color:#dc2626;font-size:13px;padding:12px 16px;margin-bottom:20px;">
+                    <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;color:#dc2626;font-size:13px;padding:12px 16px;margin-bottom:20px;">
                         <i class="fa-solid fa-circle-exclamation me-2"></i>Please fix the errors below.
-                        {{ form.errors }}
                     </div>
                     {% endif %}
 
@@ -143,15 +174,168 @@
     </div>
 </div>
 
+<!-- ISBN Lookup Result Modal -->
+<div class="modal fade" id="lookupModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content" style="border-radius:12px;border:1px solid var(--border);background:var(--bg-card);">
+            <div class="modal-header" style="border-bottom:1px solid var(--border);">
+                <h5 class="modal-title" style="font-weight:700;color:var(--text-primary);">
+                    <i class="fa-solid fa-book me-2" style="color:var(--primary);"></i>Book Found
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="modalBody"></div>
+            <div class="modal-footer" style="border-top:1px solid var(--border);">
+                <button type="button" class="btn-cancel" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn-submit" onclick="applyLookup()">
+                    <i class="fa-solid fa-wand-magic-sparkles me-2"></i>Auto-fill Form
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
 <style>
-.form-section { margin-bottom: 28px; padding-bottom: 28px; border-bottom: 1px solid #f3f4f6; }
-.form-section:last-of-type { border-bottom: none; }
-.form-section-title { font-size: 13px; font-weight: 700; color: #4f46e5; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 16px; }
-.form-label-custom { font-size: 13px; font-weight: 600; color: #374151; margin-bottom: 5px; display: block; }
-.required { color: #ef4444; }
-.btn-submit { background:#4f46e5;color:white;border:none;border-radius:8px;padding:10px 24px;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center; }
-.btn-submit:hover { background:#3730a3; }
-.btn-cancel { background:#f3f4f6;color:#6b7280;border:none;border-radius:8px;padding:10px 20px;font-size:14px;font-weight:500;text-decoration:none;display:inline-flex;align-items:center;transition:all .2s; }
-.btn-cancel:hover { background:#e5e7eb;color:#374151; }
+.form-section { margin-bottom:28px;padding-bottom:28px;border-bottom:1px solid var(--border-light); }
+.form-section:last-of-type { border-bottom:none; }
+.form-section-title { font-size:13px;font-weight:700;color:var(--primary);text-transform:uppercase;letter-spacing:.06em;margin-bottom:16px; }
+.form-label-custom { font-size:13px;font-weight:600;color:var(--text-secondary);margin-bottom:5px;display:block; }
+.required { color:#ef4444; }
+.btn-lookup { background:var(--primary);color:white;border:none;border-radius:8px;padding:10px 20px;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;white-space:nowrap;display:inline-flex;align-items:center; }
+.btn-lookup:hover { background:var(--primary-dark); }
+.btn-submit { background:var(--primary);color:white;border:none;border-radius:8px;padding:10px 24px;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s;display:inline-flex;align-items:center; }
+.btn-submit:hover { background:var(--primary-dark); }
+.btn-cancel { background:var(--border-light);color:var(--text-secondary);border:none;border-radius:8px;padding:10px 20px;font-size:14px;font-weight:500;text-decoration:none;display:inline-flex;align-items:center;transition:all .2s; }
+.btn-cancel:hover { background:var(--border);color:var(--text-primary); }
+.lookup-field { display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border-light);font-size:13.5px; }
+.lookup-field:last-child { border-bottom:none; }
+.lookup-key { color:var(--text-muted);font-weight:500;min-width:120px; }
+.lookup-val { color:var(--text-primary);font-weight:600;text-align:right;max-width:300px; }
 </style>
+
+<script>
+let lookupResult = null;
+
+function lookupISBN() {
+    const isbn = document.getElementById('isbnLookupInput').value.trim();
+    const btn = document.getElementById('isbnLookupBtn');
+    const status = document.getElementById('lookupStatus');
+
+    if (!isbn) {
+        showStatus('Please enter an ISBN.', 'warning');
+        return;
+    }
+
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i>Looking up...';
+    status.style.display = 'none';
+
+    fetch(`/books/isbn-lookup/?isbn=${encodeURIComponent(isbn)}`)
+        .then(res => res.json())
+        .then(data => {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-magnifying-glass me-2"></i>Lookup';
+
+            if (data.error) {
+                showStatus(`<i class="fa-solid fa-circle-exclamation me-2"></i>${data.error}`, 'error');
+                return;
+            }
+
+            lookupResult = data.data;
+            showModal(data.data);
+        })
+        .catch(() => {
+            btn.disabled = false;
+            btn.innerHTML = '<i class="fa-solid fa-magnifying-glass me-2"></i>Lookup';
+            showStatus('<i class="fa-solid fa-wifi me-2"></i>Network error. Check your connection.', 'error');
+        });
+}
+
+function showStatus(msg, type) {
+    const el = document.getElementById('lookupStatus');
+    const colors = {
+        error: '#fef2f2',
+        warning: '#fffbeb',
+        success: '#ecfdf5'
+    };
+    const textColors = {
+        error: '#dc2626',
+        warning: '#d97706',
+        success: '#059669'
+    };
+    el.style.display = 'block';
+    el.style.background = colors[type];
+    el.style.color = textColors[type];
+    el.style.padding = '10px 14px';
+    el.style.borderRadius = '8px';
+    el.innerHTML = msg;
+}
+
+function showModal(data) {
+    const authors = data.authors.map(a => `${a.first_name} ${a.last_name}`).join(', ') || '-';
+    const cats = data.categories.slice(0, 4).join(', ') || '-';
+
+    let html = `
+        <div style="display:flex;gap:20px;align-items:flex-start;">
+            ${data.cover_url ? `<img src="${data.cover_url}" style="height:120px;border-radius:8px;border:1px solid var(--border);flex-shrink:0;">` : ''}
+            <div style="flex:1;">
+                <h4 style="font-size:18px;font-weight:700;color:var(--text-primary);margin-bottom:4px;">${data.title || '-'}</h4>
+                <p style="color:var(--text-muted);font-size:13px;margin-bottom:12px;">via ${data.source}</p>
+                <div>
+                    <div class="lookup-field"><span class="lookup-key">Authors</span><span class="lookup-val">${authors}</span></div>
+                    <div class="lookup-field"><span class="lookup-key">Publisher</span><span class="lookup-val">${data.publisher || '-'}</span></div>
+                    <div class="lookup-field"><span class="lookup-key">Year</span><span class="lookup-val">${data.publication_year || '-'}</span></div>
+                    <div class="lookup-field"><span class="lookup-key">Pages</span><span class="lookup-val">${data.pages || '-'}</span></div>
+                    <div class="lookup-field"><span class="lookup-key">ISBN-10</span><span class="lookup-val">${data.isbn || '-'}</span></div>
+                    <div class="lookup-field"><span class="lookup-key">ISBN-13</span><span class="lookup-val">${data.isbn13 || '-'}</span></div>
+                    <div class="lookup-field"><span class="lookup-key">Subjects</span><span class="lookup-val">${cats}</span></div>
+                </div>
+            </div>
+        </div>
+        ${data.description ? `<p style="margin-top:16px;font-size:13px;color:var(--text-secondary);line-height:1.6;padding:12px;background:var(--border-light);border-radius:8px;">${data.description}</p>` : ''}
+    `;
+    document.getElementById('modalBody').innerHTML = html;
+    new bootstrap.Modal(document.getElementById('lookupModal')).show();
+}
+
+function applyLookup() {
+    if (!lookupResult) return;
+    const d = lookupResult;
+
+    if (d.title) setField('id_title', d.title);
+    if (d.isbn) setField('id_isbn', d.isbn);
+    if (d.isbn13) setField('id_isbn13', d.isbn13);
+    if (d.description) setField('id_description', d.description);
+    if (d.pages) setField('id_pages', d.pages);
+    if (d.publication_year) setField('id_publication_year', d.publication_year);
+
+    if (d.tags && d.categories.length > 0) {
+        setField('id_tags', d.categories.join(', '));
+    }
+
+    if (d.cover_url) {
+        const preview = document.getElementById('coverPreview');
+        const img = document.getElementById('coverImg');
+        img.src = d.cover_url;
+        preview.style.display = 'block';
+    }
+
+    bootstrap.Modal.getInstance(document.getElementById('lookupModal')).hide();
+    showStatus(
+        '<i class="fa-solid fa-check-circle me-2"></i>Form auto-filled successfully! Review and save.',
+        'success'
+    );
+
+    document.getElementById('bookForm').scrollIntoView({ behavior: 'smooth' });
+}
+
+function setField(id, value) {
+    const el = document.getElementById(id);
+    if (el) el.value = value;
+}
+
+document.getElementById('isbnLookupInput')?.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') { e.preventDefault(); lookupISBN(); }
+});
+</script>
 {% endblock %}
