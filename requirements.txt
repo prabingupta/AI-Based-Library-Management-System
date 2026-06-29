@@ -25,6 +25,7 @@ django-extensions==4.1
 django-timezone-field==7.2.2
 djangorestframework==3.17.1
 djangorestframework_simplejwt==5.5.1
+et_xmlfile==2.0.0
 filelock==3.29.4
 flake8==7.3.0
 fsspec==2026.6.0
@@ -59,6 +60,7 @@ narwhals==2.22.1
 networkx==3.6.1
 nodeenv==1.10.0
 numpy==2.5.0
+openpyxl==3.1.5
 packaging==26.2
 pathspec==1.1.1
 pillow==12.2.0
@@ -85,6 +87,7 @@ pytokens==0.4.1
 PyYAML==6.0.3
 redis==8.0.1
 regex==2026.5.9
+reportlab==5.0.0
 requests==2.34.2
 rich==15.0.0
 safetensors==0.8.0
