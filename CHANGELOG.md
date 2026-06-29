@@ -49,3 +49,27 @@ All notable changes to LibraryOS are documented here.
 - Email notification delivery
 - SMS notification support
 - Two-factor authentication
+
+## [1.2.0] - 2026-06-29
+
+### Added
+- REST API with JWT authentication (Books, Members, Borrowing, Categories, Authors, Publishers)
+- Custom API permissions (IsLibraryAdmin, IsLibrarianOrAbove, IsStaffOrReadOnly)
+- Global search API endpoint
+- Dashboard stats API endpoint
+- AI Book Recommendation System using sentence-transformers (all-MiniLM-L6-v2)
+- Cosine similarity scoring for recommendations
+- Fallback category-based recommendations
+- generate_embeddings management command
+- ISBN Lookup with Open Library API — auto-fill book form
+- Gemini AI Chatbot with library context awareness
+- Floating chatbot widget with typing indicator and conversation history
+- PDF report export — Books and Members (ReportLab)
+- Excel report export — Books and Borrowing (openpyxl)
+- Export buttons with dropdown on Reports page
+
+### Fixed
+- Pre-commit hooks passing cleanly (Black + Flake8)
+- Year regex in ISBN lookup service
+- Settings file import ordering (E402)
+- Unused imports across api, books, reports modules
