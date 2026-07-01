@@ -151,3 +151,55 @@ def _fetch_by_search(isbn):
 
     except (urllib.error.URLError, json.JSONDecodeError, Exception):
         return None
+
+
+def _search_by_title(title):
+    import urllib.parse
+
+    try:
+        encoded = urllib.parse.quote(title)
+        url = f"{OPEN_LIBRARY_SEARCH}?title={encoded}&limit=3"
+        req = urllib.request.Request(
+            url,
+            headers={"User-Agent": "LibraryOS/1.0 (library management system)"},
+        )
+        with urllib.request.urlopen(req, timeout=8) as response:
+            raw = json.loads(response.read().decode())
+
+        docs = raw.get("docs", [])
+        results = []
+        for doc in docs:
+            authors = []
+            for name in doc.get("author_name", [])[:2]:
+                parts = name.strip().split()
+                if len(parts) >= 2:
+                    authors.append({"first_name": parts[0], "last_name": " ".join(parts[1:])})
+                else:
+                    authors.append({"first_name": name, "last_name": ""})
+
+            pub_years = doc.get("publish_year", [])
+            pub_year = max(pub_years) if pub_years else None
+
+            isbn_list = doc.get("isbn", [])
+            isbn10 = next((i for i in isbn_list if len(i) == 10), "")
+            isbn13 = next((i for i in isbn_list if len(i) == 13), "")
+
+            results.append(
+                {
+                    "title": doc.get("title", ""),
+                    "isbn": isbn10,
+                    "isbn13": isbn13,
+                    "authors": authors,
+                    "publisher": (doc.get("publisher") or [""])[0],
+                    "description": "",
+                    "pages": doc.get("number_of_pages_median"),
+                    "publication_year": pub_year,
+                    "cover_url": "",
+                    "categories": doc.get("subject", [])[:4],
+                    "source": "Open Library Title Search",
+                }
+            )
+        return results
+
+    except (urllib.error.URLError, json.JSONDecodeError, Exception):
+        return []

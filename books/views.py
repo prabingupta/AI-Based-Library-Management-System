@@ -221,3 +221,39 @@ class ISBNLookupView(View):
             return JsonResponse({"error": error}, status=404)
 
         return JsonResponse({"success": True, "data": data})
+
+
+@method_decorator(login_required, name="dispatch")
+class OCRScannerView(View):
+    template_name = "books/ocr_scanner.html"
+
+    def get(self, request):
+        return render(
+            request,
+            self.template_name,
+            {"page_title": "OCR Book Scanner"},
+        )
+
+    def post(self, request):
+        from django.http import JsonResponse
+        from .services.ocr_scanner import scan_book_cover
+
+        if "image" not in request.FILES:
+            return JsonResponse({"error": "No image uploaded."}, status=400)
+
+        image_file = request.FILES["image"]
+
+        if image_file.size > 10 * 1024 * 1024:
+            return JsonResponse({"error": "Image too large. Max 10MB."}, status=400)
+
+        allowed_types = ["image/jpeg", "image/png", "image/webp", "image/bmp"]
+        if image_file.content_type not in allowed_types:
+            return JsonResponse({"error": "Invalid file type. Use JPG, PNG, or WebP."}, status=400)
+
+        image_bytes = image_file.read()
+        result, error = scan_book_cover(image_bytes)
+
+        if error:
+            return JsonResponse({"error": error}, status=422)
+
+        return JsonResponse({"success": True, "result": result})

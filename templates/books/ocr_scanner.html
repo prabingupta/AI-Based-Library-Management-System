@@ -1,0 +1,407 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}OCR Book Scanner{% endblock %}
+
+{% block content %}
+<div class="d-flex align-items-center gap-2 mb-4" style="font-size:13px;color:var(--text-muted);">
+    <a href="{% url 'books:list' %}" style="color:var(--primary);text-decoration:none;">Books</a>
+    <i class="fa-solid fa-chevron-right" style="font-size:10px;"></i>
+    <span>OCR Scanner</span>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+
+        <!-- Header -->
+        <div class="text-center mb-4">
+            <div style="width:64px;height:64px;border-radius:16px;background:var(--primary-light);color:var(--primary);font-size:26px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;">
+                <i class="fa-solid fa-camera"></i>
+            </div>
+            <h2 style="font-size:22px;font-weight:700;color:var(--text-primary);margin-bottom:6px;">OCR Book Scanner</h2>
+            <p style="color:var(--text-secondary);font-size:14px;max-width:480px;margin:0 auto;">
+                Upload a photo of any book cover. OpenCV + Tesseract will extract the text and search Open Library for book details.
+            </p>
+        </div>
+
+        <div class="row g-4">
+            <!-- Left: Upload -->
+            <div class="col-md-5">
+                <div class="card">
+                    <div class="card-header">
+                        <i class="fa-solid fa-upload me-2 text-muted"></i>Upload Book Cover
+                    </div>
+                    <div class="card-body">
+                        <!-- Drop Zone -->
+                        <div
+                            id="dropZone"
+                            onclick="document.getElementById('imageInput').click()"
+                            style="border:2px dashed var(--border);border-radius:12px;padding:32px 20px;text-align:center;cursor:pointer;transition:all .2s;background:var(--bg-page);"
+                        >
+                            <i class="fa-solid fa-image" style="font-size:36px;color:var(--text-muted);margin-bottom:12px;display:block;"></i>
+                            <p style="font-weight:600;color:var(--text-primary);margin-bottom:4px;font-size:14px;">Click to upload or drag & drop</p>
+                            <p style="color:var(--text-muted);font-size:12.5px;margin:0;">JPG, PNG, WebP — Max 10MB</p>
+                        </div>
+                        <input type="file" id="imageInput" accept="image/*" style="display:none;" onchange="handleImageSelect(this)">
+
+                        <!-- Preview -->
+                        <div id="previewWrap" style="display:none;margin-top:16px;text-align:center;">
+                            <img id="previewImg" style="max-width:100%;max-height:280px;border-radius:10px;border:1px solid var(--border);object-fit:contain;">
+                            <button onclick="clearImage()" style="margin-top:10px;background:var(--border-light);border:none;border-radius:6px;padding:6px 14px;font-size:12.5px;color:var(--text-secondary);cursor:pointer;">
+                                <i class="fa-solid fa-xmark me-1"></i>Remove
+                            </button>
+                        </div>
+
+                        <!-- Scan Button -->
+                        <button id="scanBtn" onclick="scanImage()" disabled class="scan-btn mt-3 w-100">
+                            <i class="fa-solid fa-magnifying-glass me-2"></i>Scan Book Cover
+                        </button>
+
+                        <!-- Tips -->
+                        <div style="margin-top:16px;padding:12px;background:var(--border-light);border-radius:8px;">
+                            <p style="font-size:12px;font-weight:600;color:var(--text-primary);margin-bottom:6px;">Tips for best results:</p>
+                            <ul style="font-size:12px;color:var(--text-secondary);margin:0;padding-left:16px;">
+                                <li>Good lighting, no glare</li>
+                                <li>Book cover fills most of frame</li>
+                                <li>Text clearly visible and in focus</li>
+                                <li>Flat, not curved or angled</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right: Results -->
+            <div class="col-md-7">
+                <!-- Processing -->
+                <div id="processingCard" style="display:none;" class="card mb-3">
+                    <div class="card-body text-center py-4">
+                        <div class="scanning-animation">
+                            <i class="fa-solid fa-camera" style="font-size:32px;color:var(--primary);"></i>
+                        </div>
+                        <p style="font-weight:600;color:var(--text-primary);margin:12px 0 4px;">Processing image...</p>
+                        <p style="color:var(--text-muted);font-size:13px;margin:0;" id="processingStep">Extracting text with Tesseract OCR</p>
+                    </div>
+                </div>
+
+                <!-- Error -->
+                <div id="errorCard" style="display:none;" class="card mb-3">
+                    <div class="card-body" style="background:#fef2f2;border-radius:12px;">
+                        <p style="color:#ef4444;font-weight:600;margin-bottom:4px;font-size:14px;">
+                            <i class="fa-solid fa-circle-exclamation me-2"></i>Scan Failed
+                        </p>
+                        <p id="errorMsg" style="color:#ef4444;font-size:13px;margin:0;"></p>
+                    </div>
+                </div>
+
+                <!-- OCR Text Result -->
+                <div id="ocrTextCard" style="display:none;" class="card mb-3">
+                    <div class="card-header">
+                        <i class="fa-solid fa-font me-2 text-muted"></i>Extracted Text
+                        <span id="ocrConfidence" style="margin-left:8px;font-size:11px;font-weight:600;padding:2px 8px;border-radius:20px;background:var(--primary-light);color:var(--primary);"></span>
+                    </div>
+                    <div class="card-body">
+                        <div id="extractedLines" style="display:flex;flex-wrap:wrap;gap:6px;"></div>
+                    </div>
+                </div>
+
+                <!-- Book Results -->
+                <div id="resultsCard" style="display:none;" class="card">
+                    <div class="card-header d-flex align-items-center justify-content-between">
+                        <span><i class="fa-solid fa-books me-2 text-muted"></i>Books Found</span>
+                        <span id="resultsCount" style="font-size:12px;color:var(--text-muted);"></span>
+                    </div>
+                    <div id="bookResults" class="card-body p-0"></div>
+                </div>
+
+                <!-- Empty State -->
+                <div id="emptyState" class="card">
+                    <div class="card-body text-center py-5" style="color:var(--text-muted);">
+                        <i class="fa-solid fa-camera" style="font-size:40px;margin-bottom:14px;display:block;opacity:.3;"></i>
+                        <p style="font-size:15px;font-weight:600;color:var(--text-secondary);margin-bottom:4px;">Ready to scan</p>
+                        <p style="font-size:13.5px;">Upload a book cover photo to get started.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.scan-btn {
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    padding: 11px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all .2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.scan-btn:hover:not(:disabled) { background: var(--primary-dark); }
+.scan-btn:disabled { opacity: .5; cursor: not-allowed; }
+
+#dropZone:hover { border-color: var(--primary); background: var(--primary-light); }
+#dropZone.dragover { border-color: var(--primary); background: var(--primary-light); transform: scale(1.01); }
+
+.book-result-item {
+    padding: 16px 20px;
+    border-bottom: 1px solid var(--border-light);
+    transition: background .15s;
+}
+.book-result-item:last-child { border-bottom: none; }
+.book-result-item:hover { background: var(--border-light); }
+
+.match-badge {
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 20px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+}
+.match-isbn { background: #ecfdf5; color: #10b981; }
+.match-title { background: #eef2ff; color: #4f46e5; }
+
+.use-book-btn {
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 6px 14px;
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all .2s;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+.use-book-btn:hover { background: var(--primary-dark); color: white; }
+
+.ocr-line-tag {
+    background: var(--border-light);
+    color: var(--text-secondary);
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all .2s;
+    border: 1px solid var(--border);
+}
+.ocr-line-tag:hover { background: var(--primary-light); color: var(--primary); border-color: var(--primary); }
+
+@keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:.4; } }
+.scanning-animation { animation: pulse 1.5s infinite; }
+</style>
+
+<script>
+let selectedFile = null;
+let scanResult = null;
+const steps = [
+    'Decoding image with OpenCV...',
+    'Applying CLAHE enhancement...',
+    'Running Tesseract OCR...',
+    'Parsing extracted text...',
+    'Searching Open Library...',
+];
+let stepIndex = 0;
+let stepTimer = null;
+
+function handleImageSelect(input) {
+    const file = input.files[0];
+    if (!file) return;
+    selectedFile = file;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        document.getElementById('previewImg').src = e.target.result;
+        document.getElementById('previewWrap').style.display = 'block';
+        document.getElementById('dropZone').style.display = 'none';
+        document.getElementById('scanBtn').disabled = false;
+    };
+    reader.readAsDataURL(file);
+}
+
+function clearImage() {
+    selectedFile = null;
+    document.getElementById('imageInput').value = '';
+    document.getElementById('previewWrap').style.display = 'none';
+    document.getElementById('dropZone').style.display = 'block';
+    document.getElementById('scanBtn').disabled = true;
+    hideAll();
+    document.getElementById('emptyState').style.display = 'block';
+}
+
+function hideAll() {
+    ['processingCard','errorCard','ocrTextCard','resultsCard','emptyState'].forEach(id => {
+        document.getElementById(id).style.display = 'none';
+    });
+}
+
+function scanImage() {
+    if (!selectedFile) return;
+
+    hideAll();
+    document.getElementById('processingCard').style.display = 'block';
+    document.getElementById('scanBtn').disabled = true;
+
+    stepIndex = 0;
+    stepTimer = setInterval(() => {
+        stepIndex = (stepIndex + 1) % steps.length;
+        document.getElementById('processingStep').textContent = steps[stepIndex];
+    }, 1200);
+
+    const formData = new FormData();
+    formData.append('image', selectedFile);
+    formData.append('csrfmiddlewaretoken', getCookie('csrftoken'));
+
+    fetch('/books/ocr-scanner/', {
+        method: 'POST',
+        body: formData,
+    })
+    .then(r => r.json())
+    .then(data => {
+        clearInterval(stepTimer);
+        document.getElementById('processingCard').style.display = 'none';
+        document.getElementById('scanBtn').disabled = false;
+
+        if (data.error) {
+            document.getElementById('errorCard').style.display = 'block';
+            document.getElementById('errorMsg').textContent = data.error;
+            return;
+        }
+
+        scanResult = data.result;
+        renderOCRText(data.result.ocr_data);
+        renderBookResults(data.result.search_results);
+    })
+    .catch(() => {
+        clearInterval(stepTimer);
+        document.getElementById('processingCard').style.display = 'none';
+        document.getElementById('scanBtn').disabled = false;
+        document.getElementById('errorCard').style.display = 'block';
+        document.getElementById('errorMsg').textContent = 'Network error. Make sure the server is running.';
+    });
+}
+
+function renderOCRText(ocrData) {
+    const card = document.getElementById('ocrTextCard');
+    const container = document.getElementById('extractedLines');
+    container.innerHTML = '';
+
+    const lines = ocrData.raw_lines || [];
+    if (lines.length === 0) {
+        card.style.display = 'none';
+        return;
+    }
+
+    document.getElementById('ocrConfidence').textContent = `${lines.length} text segments`;
+
+    lines.forEach(line => {
+        const tag = document.createElement('span');
+        tag.className = 'ocr-line-tag';
+        tag.textContent = line.length > 40 ? line.substring(0, 40) + '...' : line;
+        tag.title = line;
+        container.appendChild(tag);
+    });
+
+    card.style.display = 'block';
+}
+
+function renderBookResults(results) {
+    const card = document.getElementById('resultsCard');
+    const container = document.getElementById('bookResults');
+    container.innerHTML = '';
+
+    if (!results || results.length === 0) {
+        const fallback = document.createElement('div');
+        fallback.style.cssText = 'padding:24px;text-align:center;color:var(--text-muted);font-size:13.5px;';
+        fallback.innerHTML = `
+            <i class="fa-solid fa-magnifying-glass" style="font-size:28px;margin-bottom:10px;display:block;opacity:.4;"></i>
+            No books found. Try the <a href="/books/search/" style="color:var(--primary);">manual search</a> or
+            <a href="/books/add/" style="color:var(--primary);">add manually</a>.
+        `;
+        container.appendChild(fallback);
+        document.getElementById('resultsCount').textContent = '0 found';
+        card.style.display = 'block';
+        return;
+    }
+
+    document.getElementById('resultsCount').textContent = `${results.length} found`;
+
+    results.forEach((book, i) => {
+        const authors = book.authors.map(a => `${a.first_name} ${a.last_name}`).join(', ') || 'Unknown';
+        const params = new URLSearchParams({
+            title: book.title || '',
+            isbn: book.isbn || '',
+            isbn13: book.isbn13 || '',
+            description: book.description || '',
+            pages: book.pages || '',
+            publication_year: book.publication_year || '',
+        });
+
+        const item = document.createElement('div');
+        item.className = 'book-result-item';
+        item.innerHTML = `
+            <div class="d-flex align-items-start justify-content-between gap-3">
+                <div style="flex:1;min-width:0;">
+                    <div class="d-flex align-items-center gap-2 mb-1">
+                        <span class="match-badge match-${book.match_type}">${book.match_type === 'isbn' ? 'ISBN Match' : 'Title Match'}</span>
+                        <span style="font-size:11px;color:var(--text-muted);">via ${book.source}</span>
+                    </div>
+                    <p style="font-size:14px;font-weight:700;color:var(--text-primary);margin-bottom:3px;">${escapeHtml(book.title || 'Unknown Title')}</p>
+                    <p style="font-size:12.5px;color:var(--text-secondary);margin-bottom:6px;">by ${escapeHtml(authors)}</p>
+                    <div style="display:flex;flex-wrap:wrap;gap:8px;font-size:12px;color:var(--text-muted);">
+                        ${book.publication_year ? `<span><i class="fa-solid fa-calendar me-1"></i>${book.publication_year}</span>` : ''}
+                        ${book.pages ? `<span><i class="fa-solid fa-file me-1"></i>${book.pages} pages</span>` : ''}
+                        ${book.isbn13 ? `<span><i class="fa-solid fa-barcode me-1"></i>${book.isbn13}</span>` : ''}
+                    </div>
+                </div>
+                <a href="/books/add/?${params}" class="use-book-btn">
+                    <i class="fa-solid fa-plus"></i>Add
+                </a>
+            </div>
+        `;
+        container.appendChild(item);
+    });
+
+    card.style.display = 'block';
+}
+
+function escapeHtml(text) {
+    return String(text)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+}
+
+function getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(';').shift();
+    return '';
+}
+
+// Drag and drop
+const dropZone = document.getElementById('dropZone');
+dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('dragover'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+dropZone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropZone.classList.remove('dragover');
+    const file = e.dataTransfer.files[0];
+    if (file && file.type.startsWith('image/')) {
+        const dt = new DataTransfer();
+        dt.items.add(file);
+        document.getElementById('imageInput').files = dt.files;
+        handleImageSelect(document.getElementById('imageInput'));
+    }
+});
+</script>
+{% endblock %}

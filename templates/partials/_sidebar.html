@@ -24,6 +24,10 @@
                 <i class="fa-solid fa-books"></i>
                 <span>Books</span>
             </a>
+            <a href="{% url 'books:ocr_scanner' %}" class="nav-item {% if 'ocr' in request.path %}active{% endif %}">
+                <i class="fa-solid fa-camera"></i>
+                <span>OCR Scanner</span>
+            </a>
             <a href="{% url 'members:list' %}" class="nav-item {% if request.resolver_match.app_name == 'members' %}active{% endif %}">
                 <i class="fa-solid fa-users"></i>
                 <span>Members</span>
