@@ -257,3 +257,39 @@ class OCRScannerView(View):
             return JsonResponse({"error": error}, status=422)
 
         return JsonResponse({"success": True, "result": result})
+
+
+@method_decorator(login_required, name="dispatch")
+class NLPSearchView(View):
+    template_name = "books/nlp_search.html"
+
+    def get(self, request):
+        query = request.GET.get("q", "").strip()
+        results = []
+        search_type = None
+        error = None
+        suggestions = [
+            "books about war and survival",
+            "something about money and wealth",
+            "dystopian future society",
+            "history of human civilization",
+            "science and the universe",
+            "philosophy of life",
+            "adventure and discovery",
+        ]
+
+        if query:
+            from books.services.nlp_search import hybrid_search
+
+            results, search_type, error = hybrid_search(query, top_n=10)
+
+        context = {
+            "query": query,
+            "results": results,
+            "search_type": search_type,
+            "error": error,
+            "suggestions": suggestions,
+            "total": len(results),
+            "page_title": "Smart Search",
+        }
+        return render(request, self.template_name, context)

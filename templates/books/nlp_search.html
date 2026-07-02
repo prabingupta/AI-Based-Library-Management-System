@@ -1,0 +1,280 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Smart Search{% endblock %}
+
+{% block content %}
+<div class="text-center mb-5">
+    <div class="nlp-hero-icon">
+        <i class="fa-solid fa-wand-magic-sparkles"></i>
+    </div>
+    <h2 class="nlp-hero-title">Smart NLP Search</h2>
+    <p class="nlp-hero-sub">
+        Search by meaning, not just keywords. Powered by sentence-transformers and cosine similarity.
+    </p>
+</div>
+
+<!-- Search Bar -->
+<div class="row justify-content-center mb-4">
+    <div class="col-lg-8">
+        <form method="get">
+            <div class="nlp-search-wrap">
+                <i class="fa-solid fa-wand-magic-sparkles nlp-search-icon"></i>
+                <input
+                    type="text"
+                    name="q"
+                    value="{{ query }}"
+                    class="nlp-search-input"
+                    placeholder="Describe what you're looking for... e.g. 'books about war and survival'"
+                    autofocus
+                >
+                <button type="submit" class="nlp-search-btn">Search</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% if not query %}
+<!-- Suggestions -->
+<div class="row justify-content-center mb-5">
+    <div class="col-lg-8 text-center">
+        <p class="suggestion-label">TRY SEARCHING FOR</p>
+        <div class="suggestion-wrap">
+            {% for suggestion in suggestions %}
+            <a href="?q={{ suggestion|urlencode }}" class="suggestion-chip">
+                <i class="fa-solid fa-magnifying-glass"></i> {{ suggestion }}
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% if query %}
+<!-- Results Header -->
+<div class="row justify-content-center mb-3">
+    <div class="col-lg-10">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+            <div class="d-flex align-items-center gap-2">
+                <span class="results-count">{{ total }} result{{ total|pluralize }} for "<strong>{{ query }}</strong>"</span>
+                {% if search_type == 'semantic' %}
+                <span class="search-type-badge semantic">
+                    <i class="fa-solid fa-brain me-1"></i>Semantic
+                </span>
+                {% elif search_type == 'keyword' %}
+                <span class="search-type-badge keyword">
+                    <i class="fa-solid fa-font me-1"></i>Keyword Fallback
+                </span>
+                {% endif %}
+            </div>
+            <a href="{% url 'books:nlp_search' %}" class="clear-link">
+                <i class="fa-solid fa-xmark me-1"></i>Clear
+            </a>
+        </div>
+
+        {% if error %}
+        <div class="error-banner mt-2">
+            <i class="fa-solid fa-triangle-exclamation me-2"></i>{{ error }}
+            {% if 'embeddings' in error %}
+            — Run <code>python manage.py generate_embeddings</code>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Results List -->
+<div class="row justify-content-center">
+    <div class="col-lg-10">
+        {% if results %}
+        <div class="results-list">
+            {% for item in results %}
+            <a href="{% url 'books:detail' item.book.pk %}" class="result-card">
+                <div class="result-cover">
+                    {% if item.book.cover_image %}
+                        <img src="{{ item.book.cover_image.url }}" alt="{{ item.book.title }}">
+                    {% else %}
+                        <div class="result-cover-placeholder">
+                            <i class="fa-solid fa-book"></i>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="result-body">
+                    <div class="result-header">
+                        <h3 class="result-title">{{ item.book.title }}</h3>
+                        <div class="result-badges">
+                            {% if item.score is not None %}
+                            <span class="score-badge">{{ item.score }}%</span>
+                            {% endif %}
+                            <span class="relevance-badge rel-{{ item.relevance|lower|cut:' ' }}">
+                                {{ item.relevance }}
+                            </span>
+                        </div>
+                    </div>
+
+                    <p class="result-author">
+                        by
+                        {% for author in item.book.authors.all|slice:":2" %}
+                            {{ author.full_name }}{% if not forloop.last %}, {% endif %}
+                        {% empty %}Unknown Author{% endfor %}
+                    </p>
+
+                    {% if item.book.description %}
+                    <p class="result-desc">{{ item.book.description|truncatechars:130 }}</p>
+                    {% endif %}
+
+                    <div class="result-meta">
+                        {% for cat in item.book.categories.all|slice:":3" %}
+                        <span class="tag-cat">{{ cat.name }}</span>
+                        {% endfor %}
+                        {% if item.book.publication_year %}
+                        <span class="tag-meta">{{ item.book.publication_year }}</span>
+                        {% endif %}
+                        <span class="tag-status status-{{ item.book.status }}">
+                            {{ item.book.get_status_display }}
+                        </span>
+                        <span class="tag-meta">
+                            {{ item.book.available_copies }}/{{ item.book.total_copies }} copies
+                        </span>
+                    </div>
+                </div>
+
+                <div class="result-arrow">
+                    <i class="fa-solid fa-chevron-right"></i>
+                </div>
+            </a>
+            {% endfor %}
+        </div>
+
+        {% else %}
+        <div class="card">
+            <div class="card-body text-center py-5">
+                <i class="fa-solid fa-magnifying-glass" style="font-size:40px;color:var(--text-muted);margin-bottom:14px;display:block;opacity:.3;"></i>
+                <p style="font-size:16px;font-weight:600;color:var(--text-secondary);margin-bottom:6px;">No results found</p>
+                <p style="font-size:13.5px;color:var(--text-muted);margin-bottom:16px;">Try rephrasing your query or use different words.</p>
+                <a href="{% url 'books:search' %}?q={{ query|urlencode }}" style="color:var(--primary);font-weight:600;text-decoration:none;">
+                    Try keyword search instead →
+                </a>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
+<style>
+.nlp-hero-icon {
+    width: 64px; height: 64px;
+    border-radius: 16px;
+    background: var(--primary-light);
+    color: var(--primary);
+    font-size: 26px;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 16px;
+}
+.nlp-hero-title { font-size: 26px; font-weight: 800; color: var(--text-primary); margin-bottom: 8px; }
+.nlp-hero-sub { color: var(--text-secondary); font-size: 15px; max-width: 520px; margin: 0 auto; }
+
+.nlp-search-wrap { position: relative; display: flex; align-items: center; }
+.nlp-search-icon { position: absolute; left: 18px; color: var(--primary); font-size: 16px; pointer-events: none; }
+.nlp-search-input {
+    width: 100%;
+    padding: 14px 130px 14px 48px;
+    font-size: 15px;
+    border-radius: 12px;
+    border: 2px solid var(--border);
+    background: var(--bg-card);
+    color: var(--text-primary);
+    outline: none;
+    transition: border .2s;
+}
+.nlp-search-input:focus { border-color: var(--primary); }
+.nlp-search-btn {
+    position: absolute; right: 8px;
+    background: var(--primary); color: white;
+    border: none; border-radius: 8px;
+    padding: 8px 20px; font-size: 14px; font-weight: 600;
+    cursor: pointer; transition: all .2s;
+}
+.nlp-search-btn:hover { background: var(--primary-dark); }
+
+.suggestion-label {
+    font-size: 11px; font-weight: 700;
+    color: var(--text-muted);
+    letter-spacing: .08em;
+    margin-bottom: 12px;
+}
+.suggestion-wrap { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
+.suggestion-chip {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 7px 16px;
+    font-size: 13px;
+    color: var(--text-secondary);
+    text-decoration: none;
+    transition: all .2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+.suggestion-chip:hover { border-color: var(--primary); color: var(--primary); background: var(--primary-light); }
+
+.results-count { font-size: 15px; color: var(--text-primary); }
+.search-type-badge {
+    font-size: 11px; padding: 3px 10px;
+    border-radius: 20px; font-weight: 700;
+}
+.search-type-badge.semantic { background: #eef2ff; color: #4f46e5; }
+.search-type-badge.keyword { background: #f3f4f6; color: #6b7280; }
+.clear-link { font-size: 13px; color: var(--text-muted); text-decoration: none; }
+.clear-link:hover { color: var(--danger); }
+.error-banner {
+    background: #fffbeb; border: 1px solid #fcd34d;
+    border-radius: 8px; padding: 10px 14px;
+    font-size: 13px; color: #92400e;
+}
+
+.results-list { display: flex; flex-direction: column; gap: 12px; }
+.result-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+    text-decoration: none;
+    transition: all .2s;
+}
+.result-card:hover { border-color: var(--primary); box-shadow: var(--shadow-md); transform: translateY(-1px); }
+
+.result-cover { width: 60px; height: 84px; border-radius: 6px; overflow: hidden; background: var(--border-light); flex-shrink: 0; }
+.result-cover img { width: 100%; height: 100%; object-fit: cover; }
+.result-cover-placeholder { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: linear-gradient(135deg, var(--primary-light), var(--border-light)); color: var(--primary); font-size: 22px; }
+
+.result-body { flex: 1; min-width: 0; }
+.result-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 3px; }
+.result-title { font-size: 15px; font-weight: 700; color: var(--text-primary); margin: 0; line-height: 1.4; }
+.result-badges { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+.score-badge { background: var(--primary-light); color: var(--primary); border-radius: 20px; padding: 3px 10px; font-size: 12px; font-weight: 700; }
+.relevance-badge { font-size: 11px; padding: 3px 10px; border-radius: 20px; font-weight: 600; white-space: nowrap; }
+.rel-veryrelevant { background: #ecfdf5; color: #059669; }
+.rel-relevant { background: #eef2ff; color: #4f46e5; }
+.rel-somewhatrelevant { background: #fffbeb; color: #d97706; }
+.rel-lowmatch { background: #f3f4f6; color: #6b7280; }
+.rel-keywordmatch { background: #f3f4f6; color: #6b7280; }
+
+.result-author { font-size: 13px; color: var(--text-secondary); margin: 0 0 6px; }
+.result-desc { font-size: 13px; color: var(--text-muted); line-height: 1.5; margin-bottom: 10px; }
+.result-meta { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.tag-cat { background: var(--primary-light); color: var(--primary); font-size: 11px; padding: 2px 8px; border-radius: 20px; font-weight: 500; }
+.tag-meta { font-size: 12px; color: var(--text-muted); }
+.tag-status { font-size: 11px; padding: 2px 8px; border-radius: 20px; font-weight: 600; }
+.status-available { background: #ecfdf5; color: #10b981; }
+.status-unavailable { background: #fef2f2; color: #ef4444; }
+
+.result-arrow { color: var(--text-muted); font-size: 12px; padding-top: 4px; flex-shrink: 0; }
+</style>
+{% endblock %}
